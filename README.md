@@ -15,3 +15,8 @@ ESP8266 microcontroller is running code controlling a theoretical CCD and drive 
 
 ![Dec 2 Screenshot](https://cloud.githubusercontent.com/assets/1444697/11550369/8674e782-993d-11e5-9bdd-bcd408fba0bd.png)
 
+2. *Dec 9, 2015*:
+Example ESP8266 code converted to run on a Spark Photon.  The Photon has a faster processor and better wifi chip that can signal data much faster than the ESP8266 can.  Without extra delay added the entire sample code's signals finish in less than a second.  Messages sent come with less or at least more consistent delay, processing nice even graphs.
+
+![Dec 9 Screenshot](https://cloud.githubusercontent.com/assets/1444697/11705752/742c9de4-9ec0-11e5-90d4-b0fdcd54ee8a.png)
+
