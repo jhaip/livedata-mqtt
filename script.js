@@ -11,8 +11,12 @@ var margin = {top: 20, right: 20, bottom: 20, left: 40+44},
     graphHeight = 30,
     graphSpacing = 15;
 var start_time = new Date();
+var first_time = null;
+var first_ticks = 0;
+var last_time = null;
 var received_data = false;
 var stop = false;
+var time_graph_padding_ms = 100;
 
 var svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -79,7 +83,11 @@ tick();
 function tick() {
   for (var symbol in symbols) {
     if (symbols.hasOwnProperty(symbol)) {
-      symbols[symbol].x = symbols[symbol].x.domain([start_time, new Date()]);
+      if (first_time != null && last_time != null) {
+        symbols[symbol].x = symbols[symbol].x.domain([first_time, new Date()]);
+      } else {
+        symbols[symbol].x = symbols[symbol].x.domain([start_time, new Date()]);
+      }
       symbols[symbol].xAxis = symbols[symbol].xAxis.call(d3.svg.axis().scale(symbols[symbol].x).tickFormat(symbols[symbol].tick_format).outerTickSize(0).orient("bottom"));
 
       if (symbols[symbol].data.length > 0) {
@@ -112,7 +120,7 @@ function tick() {
   }
 
   if (!stop) {
-    setTimeout(tick, 500);
+    setTimeout(tick, 1);
   }
 }
 
@@ -158,16 +166,26 @@ function onMessageArrived(message) {
             if (!isNaN(v)) {
                 //msg.timestamp = new Date();
                 msg.value = v;
-                if (!received_data) {
-                  //start_time = new Date();//msg.timestamp-1;
-                  start_time = new Date();
-                  start_time -= msg_tick;
-                  start_time = new Date(start_time);
-                  received_data = true;
-                }
-                var dd = new Date(start_time.getTime());
-                dd += msg_tick;
+                // if (received_data === false) {
+                //   //start_time = new Date();//msg.timestamp-1;
+                //   var st = new Date();
+                //   //start_time -= msg_tick;
+                //   start_time = new Date(st.valueOf()-msg_tick);
+                //   console.log("START TIME:");
+                //   console.log(start_time);
+                //   console.log("triggered by:");
+                //   console.log(msg.label);
+                // }
                 msg.timestamp = new Date(start_time.valueOf()+msg_tick);//new Date(dd);
+                if (received_data === false) {
+                  //msg.timestamp = new Date(start_time.valueOf()+msg_tick);
+                  first_time = new Date(msg.timestamp.valueOf());
+                  received_data = true;
+                } else {
+                  //msg.timestamp = new Date(first_time.valueOf()+msg_tick);//new Date(dd);
+                  last_time = new Date(msg.timestamp.valueOf());
+                }
+                //console.log(msg.timestamp);
                 symbols[msg.label].data.push(msg);
             }
         } else if (msg.type == "BREAK") {
@@ -175,7 +193,7 @@ function onMessageArrived(message) {
                 console.log("END");
                 setTimeout(function() {
                   stop = true;
-                }, 4000);
+                }, time_graph_padding_ms);
             }
         } else if (msg.type == "TEXT") {
             console.log("Update: "+msg.value);
