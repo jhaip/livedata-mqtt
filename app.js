@@ -94,18 +94,34 @@ app.get('/projects/:project/tests/:test/signals/', function(req, res) {
     });
 });
 
-app.post('/projects/:project/test', function (req, res) {
+app.post('/projects/:project/test/', function (req, res) {
     var data = req.body;
     data.project = req.params.project;
 
     var tests = db.collection("tests");
-    tests.insert(tests);
-
-    res.send('Thanks');
+    
+    tests.find({"project": req.params.project}, {"test_number":1, _id: 0}).toArray(function(err, project_numbers) {
+        if (err) {
+            data.test_number = 0;
+        }
+        else {
+            var new_test_number = 0;
+            for (var i=0; i<project_numbers.length; i++) {
+                var project_test_number = project_numbers[i].test_number;
+                if (project_test_number+1 > new_test_number) {
+                    new_test_number = project_test_number+1;
+                }
+            }
+            data.test_number = new_test_number;
+        }
+        tests.insert(data);  // save the data
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify(data));
+    });
 });
 
 http.listen(81, function(){
-  console.log('listening on *:3000');
+  console.log('listening on *:81');
 });
  
 function originIsAllowed(origin) {
