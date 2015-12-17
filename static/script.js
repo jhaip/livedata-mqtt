@@ -17,12 +17,18 @@ var last_time = null;
 var received_data = false;
 var stop = false;
 var time_graph_padding_ms = 100;
+var svg = null;
 
-var svg = d3.select("body").append("svg")
+function init_graph() {
+svg = d3.select("body").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+console.log(symbols);
+
+var spacing_count = 0;
 
 for (var symbol in symbols) {
     if (symbols.hasOwnProperty(symbol)) {
@@ -50,7 +56,8 @@ for (var symbol in symbols) {
         symbols[symbol].tick_format = (symbol == "A0") ? null : '';
         symbols[symbol].chart = svg.append("g")
             .attr("class", "chart "+symbol)
-            .attr("transform", "translate(0," + (graphHeight+graphSpacing)*symbols[symbol].i + ")");
+            .attr("transform", "translate(0," + (graphHeight+graphSpacing)*spacing_count + ")");
+        spacing_count += 1;
         symbols[symbol].xAxis = symbols[symbol].chart.append("g")
             .attr("class", "x axis")
             .attr("transform", "translate(0," + graphHeight + ")")
@@ -77,6 +84,9 @@ for (var symbol in symbols) {
           .attr("class", "chartlabel");
     }
 }
+}
+
+init_graph();
 
 tick();
 
@@ -84,7 +94,7 @@ function tick() {
   for (var symbol in symbols) {
     if (symbols.hasOwnProperty(symbol)) {
       if (first_time != null && last_time != null) {
-        symbols[symbol].x = symbols[symbol].x.domain([first_time, new Date()]);
+        symbols[symbol].x = symbols[symbol].x.domain([first_time, last_time]);
       } else {
         symbols[symbol].x = symbols[symbol].x.domain([start_time, new Date()]);
       }
@@ -242,6 +252,23 @@ $(document).ready(function() {
         }).done(function(data) {
             console.log("received:");
             console.log(data[0]);
+            d3.select("body svg").remove();
+            symbols = data[0].signals;
+            for (var key in symbols) {
+              var symbol_data = symbols[key].data;
+              for (var i=0; i<symbol_data.length; i++) {
+                symbols[key].data[i].timestamp = new Date(symbols[key].data[i].timestamp);
+              }
+            }
+
+            var x = data[0].signals.A0.data;
+            console.log("X:");
+            console.log(x);
+            first_time = new Date(x[0].timestamp.valueOf());
+            last_time = new Date(x[x.length-1].timestamp.valueOf());
+            stop = true;
+            init_graph();
+            tick();
         });
     })
 });
