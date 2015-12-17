@@ -7,7 +7,7 @@ var symbols = {"D4": {"data":[], "i": 0},
                "A0": {"data":[], "i": 6}};
 var margin = {top: 20, right: 20, bottom: 20, left: 40+44},
     width = 1000 - margin.left - margin.right,
-    height = 600 - margin.top - margin.bottom,
+    height = 400 - margin.top - margin.bottom,
     graphHeight = 30,
     graphSpacing = 15;
 var start_time = new Date();
@@ -206,3 +206,42 @@ function onMessageArrived(message) {
         console.log(e);
     }
 }
+
+$(document).ready(function() {
+    $("#save_test").click(function() {
+        // get rid of the extra fields only really useful for D3
+        var symbols_copy = jQuery.extend({}, symbols);
+        for (var key in symbols_copy) {
+          if (symbols_copy.hasOwnProperty(key)) {
+            for (var key2 in symbols_copy[key]) {
+              if (symbols_copy[key].hasOwnProperty(key2)) {
+                if (key2 !== "data") {
+                  delete symbols_copy[key][key2];
+                }
+              }
+            }
+          }
+        }
+        var dataa = {"notes": "", "signals": symbols_copy};
+        console.log(dataa);
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:81/projects/mini-scanner/test/",
+            data: JSON.stringify(dataa),
+            contentType: "application/json; charset=utf-8"
+        }).done(function() {
+            alert("done!");
+            console.log("done!");
+        });
+    });
+
+    $("#load_test").click(function() {
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:81/projects/mini-scanner/tests/10/"
+        }).done(function(data) {
+            console.log("received:");
+            console.log(data[0]);
+        });
+    })
+});
