@@ -1,11 +1,24 @@
-div, body, p, h1, h2, h3, h4, h5 {
-  padding: 0;
-  margin: 0;
+.p-padded-top {
+    padding-top: 1.25rem;
 }
-
-body {
-   font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
-   font-weight: 300;
+.half-p-padded-top {
+    padding-top: 0.625rem;
+}
+.padded-top {
+    padding-top: 2.5rem;
+}
+.spaced-top {
+    margin-top: 2.5rem;
+}
+.spaced-bottom {
+    margin-bottom: 2.5rem;
+}
+.full-width {
+    width: 100%;
+    max-width: 100%;
+}
+.block {
+    display: block;
 }
 
 svg {
@@ -57,4 +70,12 @@ svg {
 
 .test-select:hover, .test-select.active {
   background-color: #DDD;
+}
+
+#signal-select, #test-select {
+  margin: 0;
+}
+
+.muted {
+  color: #777;
 }

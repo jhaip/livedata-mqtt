@@ -229,6 +229,166 @@ function onMessageArrived(message) {
 }
 
 $(document).ready(function() {
+    $(document).foundation();
+    $("#signal-select-dropdown").hover(function() {}, function() { console.log("unhover direct 1"); });
+
+    $('#signal-select-dropdown input').prop('checked', true);
+    $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
+
+    var signal_selection_state = {"ALL": true, "D4": true, "D5": true, "D2": true, "D15": true, "D12": true, "D13": true, "A0": true};
+    var test_selection_state = {"ALL": false, "10": false, "LIVE": true};
+
+    var all_signal_text = "All signals";
+    var all_test_text = "Test 10";
+
+    $('#signal-select-dropdown input').change(function() {
+        var signal_selection = $(this).attr("data-signal");
+
+        // check if check already matches the state
+        if (this.checked == signal_selection_state[signal_selection]) {
+            return;
+        }
+
+        // select all
+        if (signal_selection == "ALL") {
+          for (var key in signal_selection_state) {
+            if (signal_selection_state.hasOwnProperty(key)) {
+              signal_selection_state[key] = true;
+            }
+          }
+          $('#signal-select-dropdown input').prop('checked', true);
+          $("#signal-select").text(all_signal_text);
+          return;
+        }
+
+        if (this.checked) {
+          signal_selection_state[signal_selection] = true;
+          var all_signals_are_selected_now = true;
+          $.each(signal_selection_state, function(key, value) {
+            if (key != "ALL" && value == false) {
+              all_signals_are_selected_now = false;
+            }
+          });
+
+          if (all_signals_are_selected_now) {
+            signal_selection_state["ALL"] = true;
+            $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', true);
+            $("#signal-select").text(all_signal_text);
+            return;
+          }
+        } else {
+          signal_selection_state[signal_selection] = false;
+          var all_signals_are_unselected_now = true;
+          $.each(signal_selection_state, function(key, value) {
+            if (key != "ALL" && value == true) {
+              all_signals_are_unselected_now = false;
+            }
+          });
+          if (all_signals_are_unselected_now) {
+            signal_selection_state[signal_selection] = true;
+            $(this).prop('checked', true);
+            return;
+          }
+
+          // if something is being unchecked we can't be in the "all selected" state
+          signal_selection_state["ALL"] = false;
+          $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', false);
+        }
+
+        // Update label:
+        var label = "";
+        $.each(signal_selection_state, function(key, value) {
+          if (signal_selection_state[key] == true) {
+            label = (label == "") ? key : label+", "+key;
+          }
+        });
+        $("#signal-select").text(label);
+    });
+
+    ///////////////////// TEST SELECT
+    $('#test-select-dropdown input').change(function() {
+        var test_selection = $(this).attr("data-test");
+
+        // check if check already matches the state
+        if (this.checked == test_selection_state[test_selection]) {
+            return;
+        }
+
+        // select all
+        if (test_selection == "ALL") {
+          for (var key in test_selection_state) {
+            if (test_selection_state.hasOwnProperty(key)) {
+              test_selection_state[key] = true;
+            }
+          }
+          test_selection_state["LIVE"] = false;
+          $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
+          $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', true);
+          $("#test-select").text(all_test_text);
+          return;
+        }
+
+        if (test_selection == "LIVE") {
+          // mark all other tests unselected and live selected
+          test_selection_state["LIVE"] = true;
+          $.each(test_selection_state, function(key, value) {
+            if (key != "LIVE") {
+              test_selection_state[key] = false;
+            }
+          });
+          $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', false);
+          $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
+          $("#test-select").text("LIVE DATA");
+          return;
+        }
+
+        test_selection_state["LIVE"] = false;
+        $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
+
+        if (this.checked) {
+          test_selection_state[test_selection] = true;
+          var all_signals_are_selected_now = true;
+          $.each(test_selection_state, function(key, value) {
+            if (key != "LIVE" && key != "ALL" && value == false) {
+              all_signals_are_selected_now = false;
+            }
+          });
+
+          if (all_signals_are_selected_now) {
+            test_selection_state["ALL"] = true;
+            $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', true);
+            $("#test-select").text(all_test_text);
+            return;
+          }
+        } else {
+          test_selection_state[test_selection] = false;
+          var all_signals_are_unselected_now = true;
+          $.each(test_selection_state, function(key, value) {
+            if (key != "LIVE" && key != "ALL" && value == true) {
+              all_signals_are_unselected_now = false;
+            }
+          });
+          if (all_signals_are_unselected_now) {
+            test_selection_state[test_selection] = true;
+            $(this).prop('checked', true);
+            return;
+          }
+
+          // if something is being unchecked we can't be in the "all selected" state
+          test_selection_state["ALL"] = false;
+          $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', false);
+        }
+
+        // Update label:
+        var label = "";
+        $.each(test_selection_state, function(key, value) {
+          if (key != "LIVE" && key != "ALL" && value == true) {
+            label = (label == "") ? "Test "+key : label+", Test "+key;
+          }
+        });
+        $("#test-select").text(label);
+    });
+
     $("#save_test").click(function() {
         // get rid of the extra fields only really useful for D3
         var symbols_copy = jQuery.extend({}, symbols);
@@ -256,11 +416,9 @@ $(document).ready(function() {
         });
     });
 
-    $(".test-select").click(function() {
-        $(".test-select").removeClass("active");
-        $(this).addClass("active");
-
-        if ($(this).hasClass("live")) {
+    $("#test-select-dropdown").hover(function() {}, function() { 
+    //$(".test-select").click(function() {
+        if (test_selection_state["LIVE"]) {
             symbols = jQuery.extend({}, symbols_blank);
             start_time = new Date();
             first_time = null;
@@ -274,7 +432,14 @@ $(document).ready(function() {
             tick();
             return;
         }
-        var test_number = $(this).attr("data-test-number");
+
+        var test_number = 0;
+        $.each(test_selection_state, function(key, value) {
+            if (key != "LIVE" && key != "ALL" && value == true) {
+                test_number = key;
+            }
+        });
+
         $.ajax({
             type: "GET",
             url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
@@ -306,14 +471,5 @@ $(document).ready(function() {
             init_graph();
             tick();
         });
-    });
-
-    $("#hide-test-list").click(function() {
-        $("#sidebar").hide();
-        $("#show-test-list").show();
-    });
-    $("#show-test-list").click(function() {
-        $("#sidebar").show();
-        $("#show-test-list").hide();
     });
 });

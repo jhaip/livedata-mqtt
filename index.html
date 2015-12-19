@@ -1,35 +1,84 @@
-<!DOCTYPE HTML>
-<html>
-    <head>
-        <title>Live Data Viz via MQTT</title>
-        <link rel="stylesheet" type="text/css" href="style.css">
-    </head>
-    <body>
-        <div id="sidebar">
-          <div class="tests">
-            <div class="test-select live active">
-              <h3>Live Data</h3>
-            </div>
-            <div class="test-select" data-test-number=10>
-              <h3>Test 10</h3>
-              <p>Dec. 10, 2015 10:34pm</p>
-            </div>
+<!doctype html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Data Viz via MQTT</title>
+    <link rel="stylesheet" href="css/foundation.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="row spaced-top spaced-bottom full-width">
+      <div class="small-12 columns">
+        <button id="signal-select" class="button" type="button" data-toggle="signal-select-dropdown" style="margin-left: 3rem;">All signals</button>
+        <div class="dropdown-pane" id="signal-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
+          <div>
+            <input id="checkboxALL" type="checkbox" data-signal="ALL">
+            <label for="checkboxALL">All signals</label>
           </div>
-          <button id="hide-test-list">Hide Test List</button>
+          <div>
+            <input id="checkboxD4" type="checkbox" data-signal="D4">
+            <label for="checkboxD4">D4</label>
+          </div>
+          <div>
+            <input id="checkboxD5" type="checkbox" data-signal="D5">
+            <label for="checkboxD5">D5</label>
+          </div>
+          <div>
+            <input id="checkboxD2" type="checkbox" data-signal="D2">
+            <label for="checkboxD2">D2</label>
+          </div>
+          <div>
+            <input id="checkboxD15" type="checkbox" data-signal="D15">
+            <label for="checkboxD15">D15</label>
+          </div>
+          <div>
+            <input id="checkboxD12" type="checkbox" data-signal="D12">
+            <label for="checkboxD12">D12</label>
+          </div>
+          <div>
+            <input id="checkboxD13" type="checkbox" data-signal="D13">
+            <label for="checkboxD13">D13</label>
+          </div>
+          <div>
+            <input id="checkboxA0" type="checkbox" data-signal="A0">
+            <label for="checkboxA0">A0</label>
+          </div>
         </div>
+        in
+        <button id="test-select" class="button" type="button" data-toggle="test-select-dropdown">LIVE DATA</button>
+        <div class="dropdown-pane" id="test-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
+          <div>
+            <input id="checkbox11" type="checkbox" data-test="ALL"><label for="checkbox11">All 3 tests</label>
+          </div>
+          <div>
+            <input id="checkbox12" type="checkbox" data-test=10>
+            <label for="checkbox12">Test 10 <span class="muted">Dec 10, 2015 10:34pm</span></label>
+          </div>
+          <div>
+            <input id="checkbox15" type="checkbox" data-test="LIVE"><label for="checkbox15">LIVE DATA</label>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="row full-width">
+      <div class="small-12 columns">
         <div id="main">
           <div id="svg_container"></div>
-          <h1 id="active-test-name">Live Data</h1>
-          <h3>Notes</h3>
-          <textarea id="notes" rows="4" cols="50"></textarea>
-          <br><br>
-          <button id="save_test">Save Test to Database</button>
-          <br>
-          <button id="show-test-list" style="display:none">Show Test List</button>
+          <h2 id="active-test-name">Live Data</h2>
+          <h5>Notes</h5>
+          <textarea id="notes"></textarea>
+          <button id="save_test" class="button">Save Test to Database</button>
         </div>
-        <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-        <script src="mqttws31.js" type="text/javascript"></script>
-        <script src="script.js" type="text/javascript"></script>
-    </body>
+      </div>
+    </div>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="js/vendor/jquery.min.js"></script>
+    <script src="js/vendor/what-input.min.js"></script>
+    <script src="js/foundation.min.js"></script>
+    <script src="js/mqttws31.js" type="text/javascript"></script>
+    <script src="js/script.js" type="text/javascript"></script>
+  </body>
 </html>
