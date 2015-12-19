@@ -4,13 +4,32 @@
         <title>Live Data Viz via MQTT</title>
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
-    <body>    
+    <body>
+        <div id="sidebar">
+          <div class="tests">
+            <div class="test-select live active">
+              <h3>Live Data</h3>
+            </div>
+            <div class="test-select" data-test-number=10>
+              <h3>Test 10</h3>
+              <p>Dec. 10, 2015 10:34pm</p>
+            </div>
+          </div>
+          <button id="hide-test-list">Hide Test List</button>
+        </div>
+        <div id="main">
+          <div id="svg_container"></div>
+          <h1 id="active-test-name">Live Data</h1>
+          <h3>Notes</h3>
+          <textarea id="notes" rows="4" cols="50"></textarea>
+          <br><br>
+          <button id="save_test">Save Test to Database</button>
+          <br>
+          <button id="show-test-list" style="display:none">Show Test List</button>
+        </div>
         <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
         <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
         <script src="mqttws31.js" type="text/javascript"></script>
         <script src="script.js" type="text/javascript"></script>
-
-        <button id="save_test">Save Test to Database</button>
-        <button id="load_test">Load Test 10 from Database</button>
     </body>
 </html>

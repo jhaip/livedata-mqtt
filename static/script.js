@@ -5,6 +5,13 @@ var symbols = {"D4": {"data":[], "i": 0},
                "D12": {"data":[], "i": 4},
                "D13": {"data":[], "i": 5},
                "A0": {"data":[], "i": 6}};
+var symbols_blank = {"D4": {"data":[], "i": 0}, 
+               "D5": {"data":[], "i": 1},
+               "D2": {"data":[], "i": 2},
+               "D15": {"data":[], "i": 3},
+               "D12": {"data":[], "i": 4},
+               "D13": {"data":[], "i": 5},
+               "A0": {"data":[], "i": 6}};
 var margin = {top: 20, right: 20, bottom: 20, left: 40+44},
     width = 1000 - margin.left - margin.right,
     height = 400 - margin.top - margin.bottom,
@@ -20,7 +27,7 @@ var time_graph_padding_ms = 100;
 var svg = null;
 
 function init_graph() {
-svg = d3.select("body").append("svg")
+svg = d3.select("#svg_container").append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
@@ -249,14 +256,33 @@ $(document).ready(function() {
         });
     });
 
-    $("#load_test").click(function() {
+    $(".test-select").click(function() {
+        $(".test-select").removeClass("active");
+        $(this).addClass("active");
+
+        if ($(this).hasClass("live")) {
+            symbols = jQuery.extend({}, symbols_blank);
+            start_time = new Date();
+            first_time = null;
+            first_ticks = 0;
+            last_time = null;
+            received_data = false;
+            stop = false;
+            d3.select("#svg_container svg").remove();
+            $("#active-test-name").text("Live Data");
+            init_graph();
+            tick();
+            return;
+        }
+        var test_number = $(this).attr("data-test-number");
         $.ajax({
             type: "GET",
-            url: "http://localhost:81/projects/mini-scanner/tests/10/"
+            url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
         }).done(function(data) {
             console.log("received:");
             console.log(data[0]);
-            d3.select("body svg").remove();
+            d3.select("#svg_container svg").remove();
+            $("#active-test-name").text("Test "+test_number);
             symbols = data[0].signals;
             for (var key in symbols) {
               var symbol_data = symbols[key].data;
@@ -280,5 +306,14 @@ $(document).ready(function() {
             init_graph();
             tick();
         });
-    })
+    });
+
+    $("#hide-test-list").click(function() {
+        $("#sidebar").hide();
+        $("#show-test-list").show();
+    });
+    $("#show-test-list").click(function() {
+        $("#sidebar").show();
+        $("#show-test-list").hide();
+    });
 });

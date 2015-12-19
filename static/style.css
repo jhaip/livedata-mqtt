@@ -1,3 +1,13 @@
+div, body, p, h1, h2, h3, h4, h5 {
+  padding: 0;
+  margin: 0;
+}
+
+body {
+   font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif; 
+   font-weight: 300;
+}
+
 svg {
   font: 10px sans-serif;
 }
@@ -24,4 +34,27 @@ svg {
 .chartlabel {
   fill: #777;
   font-size: 16px;
+}
+
+#sidebar, #main {
+  float: left;
+}
+
+#sidebar {
+  width: 200px;
+  background-color: #EEE;
+  height: 100vh;
+}
+
+#main {
+  margin-left: 20px;
+}
+
+.test-select {
+  border-bottom: 1px solid #E0E0E0;
+  padding: 10px 10px 10px 10px;
+}
+
+.test-select:hover, .test-select.active {
+  background-color: #DDD;
 }
