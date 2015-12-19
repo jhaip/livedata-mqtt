@@ -106,7 +106,11 @@ function tick() {
           if (symbol != "A0") {
             var last_element = jQuery.extend({}, symbols[symbol].data[symbols[symbol].data.length-1]);
             //var last_element = symbols[symbol].data[symbols[symbol].data.length-1];
-            last_element.timestamp = new Date();
+            if (first_time != null && last_time != null) {
+              last_element.timestamp = last_time;
+            } else {
+              last_element.timestamp = new Date();
+            }
             symbols[symbol].data.push(last_element);
           }
 
@@ -262,10 +266,16 @@ $(document).ready(function() {
             }
 
             var x = data[0].signals.A0.data;
-            console.log("X:");
-            console.log(x);
             first_time = new Date(x[0].timestamp.valueOf());
             last_time = new Date(x[x.length-1].timestamp.valueOf());
+            for (var key in symbols) {
+              var symbol_data = symbols[key].data;
+              for (var i=0; i<symbol_data.length; i++) {
+                var t = symbols[key].data[i].timestamp;
+                if (t<first_time) { first_time = t; console.log("found earlier"); }
+                if (t>last_time) { last_time = t; console.log("found later"); }
+              }
+            }
             stop = true;
             init_graph();
             tick();
