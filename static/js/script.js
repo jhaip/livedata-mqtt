@@ -229,17 +229,31 @@ function onMessageArrived(message) {
 }
 
 $(document).ready(function() {
+
+$.ajax({
+    type: "GET",
+    url: "http://localhost:81/projects/mini-scanner/tests/"
+}).done(function(data) {
+    var signal_selection_state = {"ALL": true, "D4": true, "D5": true, "D2": true, "D15": true, "D12": true, "D13": true, "A0": true};
+    var test_selection_state = {"ALL": false, "LIVE": true};
+
+    $.each(data, function(index, value) {
+        var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
+        var test_select_el = $("<div></div>");
+        test_select_el.append($('<input id="checkbox_test_'+value.test_number+'" type="checkbox" data-test='+value.test_number+">"));
+        test_select_el.append($('<label for="checkbox_test_'+value.test_number+'">'+test_name+'</label>'));
+        $("#test-select-dropdown").append(test_select_el);
+        test_selection_state[value.test_number] = false;
+    });
+
     $(document).foundation();
     $("#signal-select-dropdown").hover(function() {}, function() { console.log("unhover direct 1"); });
 
     $('#signal-select-dropdown input').prop('checked', true);
     $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
 
-    var signal_selection_state = {"ALL": true, "D4": true, "D5": true, "D2": true, "D15": true, "D12": true, "D13": true, "A0": true};
-    var test_selection_state = {"ALL": false, "10": false, "LIVE": true};
-
     var all_signal_text = "All signals";
-    var all_test_text = "Test 10";
+    var all_test_text = "All tests";
 
     $('#signal-select-dropdown input').change(function() {
         var signal_selection = $(this).attr("data-signal");
@@ -472,4 +486,5 @@ $(document).ready(function() {
             tick();
         });
     });
+});
 });
