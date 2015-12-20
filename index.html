@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <div class="row spaced-top spaced-bottom full-width filter-row">
+    <div class="row spaced-top spaced-bottom filter-row">
       <div class="small-12 columns">
-        <span id="signal-select" data-toggle="signal-select-dropdown" style="margin-left: 3rem;">All signals</span>
+        <span class="muted">Showing</span>
+        <span id="signal-select" data-toggle="signal-select-dropdown">All signals</span>
         <div class="dropdown-pane" id="signal-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
           <div>
             <input id="checkboxALL" type="checkbox" data-signal="ALL">
@@ -59,14 +60,23 @@
         <span class="muted">.</span>
       </div>
     </div>
-    <div class="row full-width">
+    <div class="row">
       <div class="small-12 columns">
         <div id="main">
-          <div id="svg_container"></div>
-          <h2 id="active-test-name">Live Data</h2>
-          <h5>Notes</h5>
-          <textarea id="notes"></textarea>
-          <button id="save_test" class="button">Save Test to Database</button>
+          <div class="row">
+            <div class="small-12 columns">
+              <div id="svg_container"></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="small-12 medium-6 columns">
+              <h2 id="active-test-name">Live Data</h2>
+              <h5>Notes</h5>
+              <textarea id="notes"></textarea>
+              <button id="save_notes" class="button block">Save Notes</button>
+              <button id="save_test" class="button block">Save Test to Database</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

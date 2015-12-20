@@ -12,9 +12,9 @@ var symbols_blank = {"D4": {"data":[], "i": 0},
                "D12": {"data":[], "i": 4},
                "D13": {"data":[], "i": 5},
                "A0": {"data":[], "i": 6}};
-var margin = {top: 20, right: 20, bottom: 20, left: 40+44},
+var margin = {top: 20, right: 0, bottom: 20, left: 20+44},
     width = 1000 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom,
+    height = 350 - margin.top - margin.bottom,
     graphHeight = 30,
     graphSpacing = 15;
 var start_time = new Date();
@@ -442,10 +442,13 @@ $.ajax({
             stop = false;
             d3.select("#svg_container svg").remove();
             $("#active-test-name").text("Live Data");
+            $("#save_test").show();
             init_graph();
             tick();
             return;
         }
+
+        $("#save_test").hide();
 
         var test_number = 0;
         $.each(test_selection_state, function(key, value) {
