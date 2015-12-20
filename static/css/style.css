@@ -72,8 +72,17 @@ svg {
   background-color: #DDD;
 }
 
+.filter-row {
+  font-size: 1.5rem;
+}
+
 #signal-select, #test-select {
   margin: 0;
+  padding: 0.3rem 0 0.3rem;
+  border-bottom: 2px dotted #777;
+}
+#signal-select:hover, #test-select:hover {
+  cursor: pointer;
 }
 
 .muted {
