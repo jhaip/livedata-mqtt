@@ -55,6 +55,40 @@ app.get('/projects/', function(req, res) {
     });
 });
 
+app.get('/projects/:project/summary/', function(req, res) {
+    var summary = {};
+    var tests = db.collection("tests");
+
+    function get_summary_of_tests(callback) {
+        tests.find({"project": req.params.project}, {"test_number":1,"test_name":1, _id: 0}).toArray(function(err, data) {
+            if (err) {
+                res.send("There was a problem getting the information from the database.");
+            }
+            else {
+                summary["tests"] = data;
+                callback(summary["tests"][0]["test_number"]);
+            }
+        });
+    }
+    function get_summary_of_signals(test_number) {
+            tests.find({"project": req.params.project, "test_number": test_number}, {"signals":1, _id: 0}).toArray(function(err, data) {
+            if (err) {
+                res.send("There was a problem getting the information from the database.");
+            }
+            else {
+                summary["signals"] = [];
+                for(var attributename in data[0].signals){
+                    summary["signals"].push(attributename);
+                }
+                res.setHeader('Content-Type', 'application/json');
+                res.send(JSON.stringify(summary));
+            }
+        });
+    }
+
+    get_summary_of_tests(get_summary_of_signals);
+});
+
 app.get('/projects/:project/tests/', function(req, res) {
     var tests = db.collection("tests");
     tests.find({"project": req.params.project}, {"test_number":1,"test_name":1, _id: 0}).toArray(function(err, data) {

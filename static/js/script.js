@@ -229,7 +229,57 @@ function onMessageArrived(message) {
     }
 }
 
+/* Global Variables */
+var tests = {"LIVE": false};
+var signals = [];
+
+function get_summary_of_project(callback) {
+    $.ajax({
+        type: "GET",
+        url: "http://localhost:81/projects/mini-scanner/summary/"
+    }).done(function(data) {
+        console.log("return data");
+        console.log(data);
+        signals = data.signals;
+        $.each(data.tests, function(index, value) {
+            var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
+            tests[test_name] = {"test_name": value.test_name, "test_number": value.test_number, "selected": false};
+        });
+        callback();
+    });
+}
+
+function populate_selection_ui() {
+    function add_selection_el(container_el, display_name, data_name, data_value) {
+        var selection_el = $("<div></div>");
+        var input_el = $("<input type='checkbox'>")
+            .attr("id", "checkbox_"+data_name+"_"+data_value)
+            .data(data_name, data_value);
+        var label_el = $("<label></label>")
+            .attr("for", "checkbox_"+data_name+"_"+data_value)
+            .text(display_name);
+        selection_el.append(input_el);
+        selection_el.append(label_el);
+        container_el.append(selection_el);
+    }
+    $.each(tests, function(testName, testNameData) {
+        add_selection_el($("#test-select-dropdown"), testName, "test", testNameData.test_number);
+        tests[testName].selected = false;
+    });
+    $.each(signals, function(index, signalName) {
+        add_selection_el($("#signal-select-dropdown"), signalName, "signal", signalName);
+    });
+}
+
 $(document).ready(function() {
+
+    $(document).foundation();
+
+    get_summary_of_project(function() {
+        populate_selection_ui();
+    });
+
+    return;
 
     $.ajax({
         type: "GET",
