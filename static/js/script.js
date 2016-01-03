@@ -1,3 +1,4 @@
+//////////* Global Variables *////////////
 var symbols = {"D4": {"data":[], "i": 0}, 
                "D5": {"data":[], "i": 1},
                "D2": {"data":[], "i": 2},
@@ -27,70 +28,70 @@ var time_graph_padding_ms = 100;
 var svg = null;
 
 function init_graph() {
-svg = d3.select("#svg_container").append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    svg = d3.select("#svg_container").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-console.log(symbols);
+    console.log(symbols);
 
-var spacing_count = 0;
+    var spacing_count = 0;
 
-for (var symbol in symbols) {
-    if (symbols.hasOwnProperty(symbol)) {
-        // do stuff
-        symbols[symbol].x = d3.time.scale()
-            .domain([start_time, new Date()])
-            .range([0, width-44]);
+    for (var symbol in symbols) {
+        if (symbols.hasOwnProperty(symbol)) {
+            // do stuff
+            symbols[symbol].x = d3.time.scale()
+                .domain([start_time, new Date()])
+                .range([0, width-44]);
 
-        var y_domain_max = (symbol == "A0") ? 1025 : 1;
-        symbols[symbol].y = d3.scale.linear()
-            .domain([0, y_domain_max])
-            .range([graphHeight, 0]);
+            var y_domain_max = (symbol == "A0") ? 1025 : 1;
+            symbols[symbol].y = d3.scale.linear()
+                .domain([0, y_domain_max])
+                .range([graphHeight, 0]);
 
-        var interpolation = (symbol == "A0") ? "step-after" : "step-after";
-        symbols[symbol].line = d3.svg.line()
-            .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
-            .y(function(d, i) { return symbols[symbol].y(d.value); })
-            .interpolate(interpolation);
-        symbols[symbol].area = d3.svg.area()
-            .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
-            .y1(function(d, i) { return symbols[symbol].y(d.value); })
-            .y0(graphHeight)
-            .interpolate(interpolation);
+            var interpolation = (symbol == "A0") ? "step-after" : "step-after";
+            symbols[symbol].line = d3.svg.line()
+                .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
+                .y(function(d, i) { return symbols[symbol].y(d.value); })
+                .interpolate(interpolation);
+            symbols[symbol].area = d3.svg.area()
+                .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
+                .y1(function(d, i) { return symbols[symbol].y(d.value); })
+                .y0(graphHeight)
+                .interpolate(interpolation);
 
-        symbols[symbol].tick_format = (symbol == "A0") ? null : '';
-        symbols[symbol].chart = svg.append("g")
-            .attr("class", "chart "+symbol)
-            .attr("transform", "translate(0," + (graphHeight+graphSpacing)*spacing_count + ")");
-        spacing_count += 1;
-        symbols[symbol].xAxis = symbols[symbol].chart.append("g")
-            .attr("class", "x axis")
-            .attr("transform", "translate(0," + graphHeight + ")")
-            .call(d3.svg.axis().scale(symbols[symbol].x).tickFormat(symbols[symbol].tick_format).outerTickSize(0).orient("bottom"));
-        symbols[symbol].chart.append("g")
-            .attr("class", "y axis")
-            .call(d3.svg.axis().scale(symbols[symbol].y).ticks(1).orient("left"));
-        symbols[symbol].clip_path = symbols[symbol].chart.append("g");
-        // symbols[symbol].line_path = symbols[symbol].clip_path
-        //   .append("path")
-        //     .datum(symbols[symbol].data)
-        //     .attr("class", "line")
-        //     .attr("d", symbols[symbol].line);
-        symbols[symbol].area_path = symbols[symbol].clip_path
-          .append("path")
-            .datum(symbols[symbol].data)
-            .attr("class", "area")
-            .attr("d", symbols[symbol].area);
+            symbols[symbol].tick_format = (symbol == "A0") ? null : '';
+            symbols[symbol].chart = svg.append("g")
+                .attr("class", "chart "+symbol)
+                .attr("transform", "translate(0," + (graphHeight+graphSpacing)*spacing_count + ")");
+            spacing_count += 1;
+            symbols[symbol].xAxis = symbols[symbol].chart.append("g")
+                .attr("class", "x axis")
+                .attr("transform", "translate(0," + graphHeight + ")")
+                .call(d3.svg.axis().scale(symbols[symbol].x).tickFormat(symbols[symbol].tick_format).outerTickSize(0).orient("bottom"));
+            symbols[symbol].chart.append("g")
+                .attr("class", "y axis")
+                .call(d3.svg.axis().scale(symbols[symbol].y).ticks(1).orient("left"));
+            symbols[symbol].clip_path = symbols[symbol].chart.append("g");
+            // symbols[symbol].line_path = symbols[symbol].clip_path
+            //   .append("path")
+            //     .datum(symbols[symbol].data)
+            //     .attr("class", "line")
+            //     .attr("d", symbols[symbol].line);
+            symbols[symbol].area_path = symbols[symbol].clip_path
+              .append("path")
+                .datum(symbols[symbol].data)
+                .attr("class", "area")
+                .attr("d", symbols[symbol].area);
 
-        symbols[symbol].chart.append("text")
-          .attr("x", -60)
-          .attr("y", graphHeight/2+10)
-          .text( function(d) { return symbol; })
-          .attr("class", "chartlabel");
+            symbols[symbol].chart.append("text")
+              .attr("x", -60)
+              .attr("y", graphHeight/2+10)
+              .text( function(d) { return symbol; })
+              .attr("class", "chartlabel");
+        }
     }
-}
 }
 
 init_graph();
@@ -230,264 +231,264 @@ function onMessageArrived(message) {
 
 $(document).ready(function() {
 
-$.ajax({
-    type: "GET",
-    url: "http://localhost:81/projects/mini-scanner/tests/"
-}).done(function(data) {
-    var signal_selection_state = {"ALL": true, "D4": true, "D5": true, "D2": true, "D15": true, "D12": true, "D13": true, "A0": true};
-    var test_selection_state = {"ALL": false, "LIVE": true};
+    $.ajax({
+        type: "GET",
+        url: "http://localhost:81/projects/mini-scanner/tests/"
+    }).done(function(data) {
+        var signal_selection_state = {"ALL": true, "D4": true, "D5": true, "D2": true, "D15": true, "D12": true, "D13": true, "A0": true};
+        var test_selection_state = {"ALL": false, "LIVE": true};
 
-    $.each(data, function(index, value) {
-        var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
-        var test_select_el = $("<div></div>");
-        test_select_el.append($('<input id="checkbox_test_'+value.test_number+'" type="checkbox" data-test='+value.test_number+">"));
-        test_select_el.append($('<label for="checkbox_test_'+value.test_number+'">'+test_name+'</label>'));
-        $("#test-select-dropdown").append(test_select_el);
-        test_selection_state[value.test_number] = false;
-    });
-
-    $(document).foundation();
-    $("#signal-select-dropdown").hover(function() {}, function() { console.log("unhover direct 1"); });
-
-    $('#signal-select-dropdown input').prop('checked', true);
-    $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
-
-    var all_signal_text = "All signals";
-    var all_test_text = "All tests";
-
-    $('#signal-select-dropdown input').change(function() {
-        var signal_selection = $(this).attr("data-signal");
-
-        // check if check already matches the state
-        if (this.checked == signal_selection_state[signal_selection]) {
-            return;
-        }
-
-        // select all
-        if (signal_selection == "ALL") {
-          for (var key in signal_selection_state) {
-            if (signal_selection_state.hasOwnProperty(key)) {
-              signal_selection_state[key] = true;
-            }
-          }
-          $('#signal-select-dropdown input').prop('checked', true);
-          $("#signal-select").text(all_signal_text);
-          return;
-        }
-
-        if (this.checked) {
-          signal_selection_state[signal_selection] = true;
-          var all_signals_are_selected_now = true;
-          $.each(signal_selection_state, function(key, value) {
-            if (key != "ALL" && value == false) {
-              all_signals_are_selected_now = false;
-            }
-          });
-
-          if (all_signals_are_selected_now) {
-            signal_selection_state["ALL"] = true;
-            $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', true);
-            $("#signal-select").text(all_signal_text);
-            return;
-          }
-        } else {
-          signal_selection_state[signal_selection] = false;
-          var all_signals_are_unselected_now = true;
-          $.each(signal_selection_state, function(key, value) {
-            if (key != "ALL" && value == true) {
-              all_signals_are_unselected_now = false;
-            }
-          });
-          if (all_signals_are_unselected_now) {
-            signal_selection_state[signal_selection] = true;
-            $(this).prop('checked', true);
-            return;
-          }
-
-          // if something is being unchecked we can't be in the "all selected" state
-          signal_selection_state["ALL"] = false;
-          $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', false);
-        }
-
-        // Update label:
-        var label = "";
-        $.each(signal_selection_state, function(key, value) {
-          if (signal_selection_state[key] == true) {
-            label = (label == "") ? key : label+", "+key;
-          }
+        /* Add list of test names to Test Selection Dropdown */
+        $.each(data, function(index, value) {
+            var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
+            var test_select_el = $("<div></div>");
+            test_select_el.append($('<input id="checkbox_test_'+value.test_number+'" type="checkbox" data-test='+value.test_number+">"));
+            test_select_el.append($('<label for="checkbox_test_'+value.test_number+'">'+test_name+'</label>'));
+            $("#test-select-dropdown").append(test_select_el);
+            test_selection_state[value.test_number] = false;
         });
-        $("#signal-select").text(label);
-    });
 
-    ///////////////////// TEST SELECT
-    $('#test-select-dropdown input').change(function() {
-        var test_selection = $(this).attr("data-test");
+        $(document).foundation();
 
-        // check if check already matches the state
-        if (this.checked == test_selection_state[test_selection]) {
-            return;
-        }
+        $('#signal-select-dropdown input').prop('checked', true);  // initially have all signals selected
+        $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
 
-        // select all
-        if (test_selection == "ALL") {
-          for (var key in test_selection_state) {
-            if (test_selection_state.hasOwnProperty(key)) {
-              test_selection_state[key] = true;
+        var all_signal_text = "All signals";
+        var all_test_text = "All tests";
+
+        $('#signal-select-dropdown input').change(function() {
+            var signal_selection = $(this).attr("data-signal");
+
+            // check if check already matches the state
+            if (this.checked == signal_selection_state[signal_selection]) {
+                return;
             }
-          }
-          test_selection_state["LIVE"] = false;
-          $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
-          $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', true);
-          $("#test-select").text(all_test_text);
-          return;
-        }
 
-        if (test_selection == "LIVE") {
-          // mark all other tests unselected and live selected
-          test_selection_state["LIVE"] = true;
-          $.each(test_selection_state, function(key, value) {
-            if (key != "LIVE") {
-              test_selection_state[key] = false;
+            // select all
+            if (signal_selection == "ALL") {
+              for (var key in signal_selection_state) {
+                if (signal_selection_state.hasOwnProperty(key)) {
+                  signal_selection_state[key] = true;
+                }
+              }
+              $('#signal-select-dropdown input').prop('checked', true);
+              $("#signal-select").text(all_signal_text);
+              return;
             }
-          });
-          $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', false);
-          $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
-          $("#test-select").text("LIVE DATA");
-          return;
-        }
 
-        test_selection_state["LIVE"] = false;
-        $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
+            if (this.checked) {
+              signal_selection_state[signal_selection] = true;
+              var all_signals_are_selected_now = true;
+              $.each(signal_selection_state, function(key, value) {
+                if (key != "ALL" && value == false) {
+                  all_signals_are_selected_now = false;
+                }
+              });
 
-        if (this.checked) {
-          test_selection_state[test_selection] = true;
-          var all_signals_are_selected_now = true;
-          $.each(test_selection_state, function(key, value) {
-            if (key != "LIVE" && key != "ALL" && value == false) {
-              all_signals_are_selected_now = false;
+              if (all_signals_are_selected_now) {
+                signal_selection_state["ALL"] = true;
+                $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', true);
+                $("#signal-select").text(all_signal_text);
+                return;
+              }
+            } else {
+              signal_selection_state[signal_selection] = false;
+              var all_signals_are_unselected_now = true;
+              $.each(signal_selection_state, function(key, value) {
+                if (key != "ALL" && value == true) {
+                  all_signals_are_unselected_now = false;
+                }
+              });
+              if (all_signals_are_unselected_now) {
+                signal_selection_state[signal_selection] = true;
+                $(this).prop('checked', true);
+                return;
+              }
+
+              // if something is being unchecked we can't be in the "all selected" state
+              signal_selection_state["ALL"] = false;
+              $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', false);
             }
-          });
 
-          if (all_signals_are_selected_now) {
-            test_selection_state["ALL"] = true;
-            $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', true);
-            $("#test-select").text(all_test_text);
-            return;
-          }
-        } else {
-          test_selection_state[test_selection] = false;
-          var all_signals_are_unselected_now = true;
-          $.each(test_selection_state, function(key, value) {
-            if (key != "LIVE" && key != "ALL" && value == true) {
-              all_signals_are_unselected_now = false;
-            }
-          });
-          if (all_signals_are_unselected_now) {
-            test_selection_state[test_selection] = true;
-            $(this).prop('checked', true);
-            return;
-          }
-
-          // if something is being unchecked we can't be in the "all selected" state
-          test_selection_state["ALL"] = false;
-          $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', false);
-        }
-
-        // Update label:
-        var label = "";
-        $.each(test_selection_state, function(key, value) {
-          if (key != "LIVE" && key != "ALL" && value == true) {
-            label = (label == "") ? "Test "+key : label+", Test "+key;
-          }
+            // Update label:
+            var label = "";
+            $.each(signal_selection_state, function(key, value) {
+              if (signal_selection_state[key] == true) {
+                label = (label == "") ? key : label+", "+key;
+              }
+            });
+            $("#signal-select").text(label);
         });
-        $("#test-select").text(label);
-    });
 
-    $("#save_test").click(function() {
-        // get rid of the extra fields only really useful for D3
-        var symbols_copy = jQuery.extend({}, symbols);
-        for (var key in symbols_copy) {
-          if (symbols_copy.hasOwnProperty(key)) {
-            for (var key2 in symbols_copy[key]) {
-              if (symbols_copy[key].hasOwnProperty(key2)) {
-                if (key2 !== "data") {
-                  delete symbols_copy[key][key2];
+        ///////////////////// TEST SELECT
+        $('#test-select-dropdown input').change(function() {
+            var test_selection = $(this).attr("data-test");
+
+            // check if check already matches the state
+            if (this.checked == test_selection_state[test_selection]) {
+                return;
+            }
+
+            // select all
+            if (test_selection == "ALL") {
+              for (var key in test_selection_state) {
+                if (test_selection_state.hasOwnProperty(key)) {
+                  test_selection_state[key] = true;
+                }
+              }
+              test_selection_state["LIVE"] = false;
+              $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
+              $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', true);
+              $("#test-select").text(all_test_text);
+              return;
+            }
+
+            if (test_selection == "LIVE") {
+              // mark all other tests unselected and live selected
+              test_selection_state["LIVE"] = true;
+              $.each(test_selection_state, function(key, value) {
+                if (key != "LIVE") {
+                  test_selection_state[key] = false;
+                }
+              });
+              $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', false);
+              $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
+              $("#test-select").text("LIVE DATA");
+              return;
+            }
+
+            test_selection_state["LIVE"] = false;
+            $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
+
+            if (this.checked) {
+              test_selection_state[test_selection] = true;
+              var all_signals_are_selected_now = true;
+              $.each(test_selection_state, function(key, value) {
+                if (key != "LIVE" && key != "ALL" && value == false) {
+                  all_signals_are_selected_now = false;
+                }
+              });
+
+              if (all_signals_are_selected_now) {
+                test_selection_state["ALL"] = true;
+                $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', true);
+                $("#test-select").text(all_test_text);
+                return;
+              }
+            } else {
+              test_selection_state[test_selection] = false;
+              var all_signals_are_unselected_now = true;
+              $.each(test_selection_state, function(key, value) {
+                if (key != "LIVE" && key != "ALL" && value == true) {
+                  all_signals_are_unselected_now = false;
+                }
+              });
+              if (all_signals_are_unselected_now) {
+                test_selection_state[test_selection] = true;
+                $(this).prop('checked', true);
+                return;
+              }
+
+              // if something is being unchecked we can't be in the "all selected" state
+              test_selection_state["ALL"] = false;
+              $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', false);
+            }
+
+            // Update label:
+            var label = "";
+            $.each(test_selection_state, function(key, value) {
+              if (key != "LIVE" && key != "ALL" && value == true) {
+                label = (label == "") ? "Test "+key : label+", Test "+key;
+              }
+            });
+            $("#test-select").text(label);
+        });
+
+        $("#save_test").click(function() {
+            // get rid of the extra fields only really useful for D3
+            var symbols_copy = jQuery.extend({}, symbols);
+            for (var key in symbols_copy) {
+              if (symbols_copy.hasOwnProperty(key)) {
+                for (var key2 in symbols_copy[key]) {
+                  if (symbols_copy[key].hasOwnProperty(key2)) {
+                    if (key2 !== "data") {
+                      delete symbols_copy[key][key2];
+                    }
+                  }
                 }
               }
             }
-          }
-        }
-        var dataa = {"notes": "", "signals": symbols_copy};
-        console.log(dataa);
-        $.ajax({
-            type: "POST",
-            url: "http://localhost:81/projects/mini-scanner/test/",
-            data: JSON.stringify(dataa),
-            contentType: "application/json; charset=utf-8"
-        }).done(function() {
-            alert("done!");
-            console.log("done!");
+            var dataa = {"notes": "", "signals": symbols_copy};
+            console.log(dataa);
+            $.ajax({
+                type: "POST",
+                url: "http://localhost:81/projects/mini-scanner/test/",
+                data: JSON.stringify(dataa),
+                contentType: "application/json; charset=utf-8"
+            }).done(function() {
+                alert("done!");
+                console.log("done!");
+            });
+        });
+
+        $("#test-select-dropdown").hover(function() {}, function() { 
+        //$(".test-select").click(function() {
+            if (test_selection_state["LIVE"]) {
+                symbols = jQuery.extend({}, symbols_blank);
+                start_time = new Date();
+                first_time = null;
+                first_ticks = 0;
+                last_time = null;
+                received_data = false;
+                stop = false;
+                d3.select("#svg_container svg").remove();
+                $("#active-test-name").text("Live Data");
+                $("#save_test").show();
+                init_graph();
+                tick();
+                return;
+            }
+
+            $("#save_test").hide();
+
+            var test_number = 0;
+            $.each(test_selection_state, function(key, value) {
+                if (key != "LIVE" && key != "ALL" && value == true) {
+                    test_number = key;
+                }
+            });
+
+            $.ajax({
+                type: "GET",
+                url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
+            }).done(function(data) {
+                console.log("received:");
+                console.log(data[0]);
+                d3.select("#svg_container svg").remove();
+                $("#active-test-name").text("Test "+test_number);
+                symbols = data[0].signals;
+                for (var key in symbols) {
+                  var symbol_data = symbols[key].data;
+                  for (var i=0; i<symbol_data.length; i++) {
+                    symbols[key].data[i].timestamp = new Date(symbols[key].data[i].timestamp);
+                  }
+                }
+
+                var x = data[0].signals.A0.data;
+                first_time = new Date(x[0].timestamp.valueOf());
+                last_time = new Date(x[x.length-1].timestamp.valueOf());
+                for (var key in symbols) {
+                  var symbol_data = symbols[key].data;
+                  for (var i=0; i<symbol_data.length; i++) {
+                    var t = symbols[key].data[i].timestamp;
+                    if (t<first_time) { first_time = t; console.log("found earlier"); }
+                    if (t>last_time) { last_time = t; console.log("found later"); }
+                  }
+                }
+                stop = true;
+                init_graph();
+                tick();
+            });
         });
     });
-
-    $("#test-select-dropdown").hover(function() {}, function() { 
-    //$(".test-select").click(function() {
-        if (test_selection_state["LIVE"]) {
-            symbols = jQuery.extend({}, symbols_blank);
-            start_time = new Date();
-            first_time = null;
-            first_ticks = 0;
-            last_time = null;
-            received_data = false;
-            stop = false;
-            d3.select("#svg_container svg").remove();
-            $("#active-test-name").text("Live Data");
-            $("#save_test").show();
-            init_graph();
-            tick();
-            return;
-        }
-
-        $("#save_test").hide();
-
-        var test_number = 0;
-        $.each(test_selection_state, function(key, value) {
-            if (key != "LIVE" && key != "ALL" && value == true) {
-                test_number = key;
-            }
-        });
-
-        $.ajax({
-            type: "GET",
-            url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
-        }).done(function(data) {
-            console.log("received:");
-            console.log(data[0]);
-            d3.select("#svg_container svg").remove();
-            $("#active-test-name").text("Test "+test_number);
-            symbols = data[0].signals;
-            for (var key in symbols) {
-              var symbol_data = symbols[key].data;
-              for (var i=0; i<symbol_data.length; i++) {
-                symbols[key].data[i].timestamp = new Date(symbols[key].data[i].timestamp);
-              }
-            }
-
-            var x = data[0].signals.A0.data;
-            first_time = new Date(x[0].timestamp.valueOf());
-            last_time = new Date(x[x.length-1].timestamp.valueOf());
-            for (var key in symbols) {
-              var symbol_data = symbols[key].data;
-              for (var i=0; i<symbol_data.length; i++) {
-                var t = symbols[key].data[i].timestamp;
-                if (t<first_time) { first_time = t; console.log("found earlier"); }
-                if (t>last_time) { last_time = t; console.log("found later"); }
-              }
-            }
-            stop = true;
-            init_graph();
-            tick();
-        });
-    });
-});
 });
