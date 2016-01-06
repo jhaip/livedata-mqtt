@@ -338,12 +338,59 @@ function setup_signal_and_test_selection_check() {
             } else {
                 display_el.text(all_selected_text);
             }
+
+            create_graph_ui();
         }
         dropdown_el.hover(function() {}, update_selection);
         update_selection();  // Call first to make sure display text matches initial settings
     }
     test_selection($("#signal-select-dropdown"), $("#signal-select"), signals, "all signals");
     test_selection($("#test-select-dropdown"), $("#test-select"), tests, "all tests");
+}
+
+function create_graph_ui() {
+    $("#main").empty();
+    var table = $("<table></table>");
+    var tr, td;
+
+    /* Test Heading Row */
+    tr = $("<tr></tr>");
+    tr.append($("<td></td>"));  // blank top left corner
+    $.each(tests, function(testName, testData) {
+        if (testData.selected) {
+            td = $("<td></td>").text(testName);
+            tr.append(td);
+        }
+    });
+    table.append(tr);
+
+    /* signal rows */
+    $.each(signals, function(signalName, signalData) {
+        if (signalData.selected) {
+            tr = $("<tr></tr>");
+            td = $("<td></td>").text(signalName);
+            tr.append(td);
+            $.each(tests, function(testName, testData) {
+                if (testData.selected) {
+                    td = $("<td></td>");
+                    td.append(generate_graph(signalName, testName));
+                    tr.append(td); 
+                }
+            });
+            table.append(tr);
+        }
+    });
+
+    $("#main").append(table);
+}
+
+function generate_graph(signalName, testName) {
+    var el = $("<div></div>");
+    el.text(signalName+" for "+testName);
+    el.css("width", "300px");
+    el.css("height", "100px");
+    el.css("background-color", "blue");
+    return el;
 }
 
 $(document).ready(function() {
