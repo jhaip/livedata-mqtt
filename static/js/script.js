@@ -230,8 +230,8 @@ function onMessageArrived(message) {
 }
 
 /* Global Variables */
-var tests = {"LIVE": false};
-var signals = [];
+var tests = {"LIVE": {"selected": true}};
+var signals = {};
 var selecting_state = false;
 
 function get_summary_of_project(callback) {
@@ -239,9 +239,9 @@ function get_summary_of_project(callback) {
         type: "GET",
         url: "http://localhost:81/projects/mini-scanner/summary/"
     }).done(function(data) {
-        console.log("return data");
-        console.log(data);
-        signals = data.signals;
+        $.each(data.signals, function(index, signalName) {
+            signals[signalName] = {"selected": true};
+        });
         $.each(data.tests, function(index, value) {
             var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
             tests[test_name] = {"test_name": value.test_name, "test_number": value.test_number, "selected": false};
@@ -251,26 +251,20 @@ function get_summary_of_project(callback) {
 }
 
 function populate_selection_ui() {
-    function add_selection_el(container_el, display_name, data_name, data_value) {
+    function add_selection_el(container_el, display_name, data_name, data_value, selected) {
         var selection_el = $("<div></div>");
         selection_el.addClass("selection");
+        if (selected) {
+            selection_el.addClass("selected");
+        }
         selection_el.text(display_name);
-        // var input_el = $("<input type='checkbox'>")
-        //     .attr("id", "checkbox_"+data_name+"_"+data_value)
-        //     .data(data_name, data_value);
-        // var label_el = $("<label></label>")
-        //     .attr("for", "checkbox_"+data_name+"_"+data_value)
-        //     .text(display_name);
-        // selection_el.append(input_el);
-        // selection_el.append(label_el);
         container_el.append(selection_el);
     }
     $.each(tests, function(testName, testNameData) {
-        add_selection_el($("#test-select-dropdown"), testName, "test", testNameData.test_number);
-        tests[testName].selected = false;
+        add_selection_el($("#test-select-dropdown"), testName, "test", testNameData.test_number, testNameData.selected);
     });
-    $.each(signals, function(index, signalName) {
-        add_selection_el($("#signal-select-dropdown"), signalName, "signal", signalName);
+    $.each(signals, function(signalName, signalNameData) {
+        add_selection_el($("#signal-select-dropdown"), signalName, "signal", signalName, signalNameData.selected);
     });
 }
 
@@ -301,32 +295,65 @@ function save_live_data() {
     });
 }
 
+function setup_signal_and_test_selection_state_updating() {
+    $(".selection").mousedown(function() {
+        if ($(this).hasClass("selected")) {
+            $(this).removeClass("selected");
+            selecting_state = "DESELECT";
+        } else {
+            $(this).addClass("selected");
+            selecting_state = "SELECT";
+        }
+    });
+    $(".selection").hover(function() {
+        if (selecting_state == "SELECT") {
+            $(this).addClass("selected");
+        } else if (selecting_state == "DESELECT") {
+            $(this).removeClass("selected");
+        }
+    }, function() {});
+    $("body").mouseup(function() {
+        selecting_state = false;
+    });
+}
+
+function setup_signal_and_test_selection_check() {
+    function test_selection(dropdown_el, display_el, state_object, all_selected_text) {
+        function update_selection() {
+            var number_of_state_selections = 0;
+            $.each(state_object, function(name, data) {
+                state_object[name].selected = false;
+                number_of_state_selections += 1;
+            });
+            var selected_group = [];
+            dropdown_el.find(".selection.selected").each(function() {
+                var name = $(this).text();
+                if (name in state_object) {
+                    state_object[name].selected = true;
+                    selected_group.push(name);
+                }
+            });
+            if (selected_group.length < number_of_state_selections) {
+                display_el.text(selected_group.join(", "));
+            } else {
+                display_el.text(all_selected_text);
+            }
+        }
+        dropdown_el.hover(function() {}, update_selection);
+        update_selection();  // Call first to make sure display text matches initial settings
+    }
+    test_selection($("#signal-select-dropdown"), $("#signal-select"), signals, "all signals");
+    test_selection($("#test-select-dropdown"), $("#test-select"), tests, "all tests");
+}
+
 $(document).ready(function() {
 
     $(document).foundation();
 
     get_summary_of_project(function() {
         populate_selection_ui();
-        $(".selection").mousedown(function() {
-            if ($(this).hasClass("selected")) {
-                $(this).removeClass("selected");
-                selecting_state = "DESELECT";
-            } else {
-                $(this).addClass("selected");
-                selecting_state = "SELECT";
-            }
-        });
-        $(".selection").hover(function() {
-            /* Hover Enter Event */
-            if (selecting_state == "SELECT") {
-                $(this).addClass("selected");
-            } else if (selecting_state == "DESELECT") {
-                $(this).removeClass("selected");
-            }
-        }, function() {});
-        $("body").mouseup(function() {
-            selecting_state = false;
-        })
+        setup_signal_and_test_selection_state_updating();
+        setup_signal_and_test_selection_check();
     });
     return;
 
