@@ -88,3 +88,24 @@ svg {
 .muted {
   color: #777;
 }
+
+.selection {
+    padding: 10px 20px;
+    cursor: pointer;
+    /* Disable text selection highlighting */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.selection.selected {
+    background-color: #66FF66;
+}
+.selection:hover {
+    background-color: #EEE;
+}
+.selection.selected:hover {
+    background-color: #22FF22;
+}

@@ -232,6 +232,7 @@ function onMessageArrived(message) {
 /* Global Variables */
 var tests = {"LIVE": false};
 var signals = [];
+var selecting_state = false;
 
 function get_summary_of_project(callback) {
     $.ajax({
@@ -252,14 +253,16 @@ function get_summary_of_project(callback) {
 function populate_selection_ui() {
     function add_selection_el(container_el, display_name, data_name, data_value) {
         var selection_el = $("<div></div>");
-        var input_el = $("<input type='checkbox'>")
-            .attr("id", "checkbox_"+data_name+"_"+data_value)
-            .data(data_name, data_value);
-        var label_el = $("<label></label>")
-            .attr("for", "checkbox_"+data_name+"_"+data_value)
-            .text(display_name);
-        selection_el.append(input_el);
-        selection_el.append(label_el);
+        selection_el.addClass("selection");
+        selection_el.text(display_name);
+        // var input_el = $("<input type='checkbox'>")
+        //     .attr("id", "checkbox_"+data_name+"_"+data_value)
+        //     .data(data_name, data_value);
+        // var label_el = $("<label></label>")
+        //     .attr("for", "checkbox_"+data_name+"_"+data_value)
+        //     .text(display_name);
+        // selection_el.append(input_el);
+        // selection_el.append(label_el);
         container_el.append(selection_el);
     }
     $.each(tests, function(testName, testNameData) {
@@ -271,14 +274,60 @@ function populate_selection_ui() {
     });
 }
 
+function save_live_data() {
+    // get rid of the extra fields only really useful for D3
+    var symbols_copy = jQuery.extend({}, symbols);
+    for (var key in symbols_copy) {
+      if (symbols_copy.hasOwnProperty(key)) {
+        for (var key2 in symbols_copy[key]) {
+          if (symbols_copy[key].hasOwnProperty(key2)) {
+            if (key2 !== "data") {
+              delete symbols_copy[key][key2];
+            }
+          }
+        }
+      }
+    }
+    var dataa = {"notes": "", "signals": symbols_copy};
+    console.log(dataa);
+    $.ajax({
+        type: "POST",
+        url: "http://localhost:81/projects/mini-scanner/test/",
+        data: JSON.stringify(dataa),
+        contentType: "application/json; charset=utf-8"
+    }).done(function() {
+        alert("done!");
+        console.log("done!");
+    });
+}
+
 $(document).ready(function() {
 
     $(document).foundation();
 
     get_summary_of_project(function() {
         populate_selection_ui();
+        $(".selection").mousedown(function() {
+            if ($(this).hasClass("selected")) {
+                $(this).removeClass("selected");
+                selecting_state = "DESELECT";
+            } else {
+                $(this).addClass("selected");
+                selecting_state = "SELECT";
+            }
+        });
+        $(".selection").hover(function() {
+            /* Hover Enter Event */
+            if (selecting_state == "SELECT") {
+                $(this).addClass("selected");
+            } else if (selecting_state == "DESELECT") {
+                $(this).removeClass("selected");
+            }
+        }, function() {});
+        $("body").mouseup(function() {
+            selecting_state = false;
+        })
     });
-
     return;
 
     $.ajax({
@@ -454,32 +503,7 @@ $(document).ready(function() {
             $("#test-select").text(label);
         });
 
-        $("#save_test").click(function() {
-            // get rid of the extra fields only really useful for D3
-            var symbols_copy = jQuery.extend({}, symbols);
-            for (var key in symbols_copy) {
-              if (symbols_copy.hasOwnProperty(key)) {
-                for (var key2 in symbols_copy[key]) {
-                  if (symbols_copy[key].hasOwnProperty(key2)) {
-                    if (key2 !== "data") {
-                      delete symbols_copy[key][key2];
-                    }
-                  }
-                }
-              }
-            }
-            var dataa = {"notes": "", "signals": symbols_copy};
-            console.log(dataa);
-            $.ajax({
-                type: "POST",
-                url: "http://localhost:81/projects/mini-scanner/test/",
-                data: JSON.stringify(dataa),
-                contentType: "application/json; charset=utf-8"
-            }).done(function() {
-                alert("done!");
-                console.log("done!");
-            });
-        });
+        $("#save_test").click(save_live_data);
 
         $("#test-select-dropdown").hover(function() {}, function() { 
         //$(".test-select").click(function() {
