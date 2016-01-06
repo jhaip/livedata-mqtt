@@ -72,7 +72,7 @@ svg {
   background-color: #DDD;
 }
 
-.filter-row {
+.filter-row, td.heading-cell {
   font-size: 1.5rem;
 }
 
@@ -108,4 +108,16 @@ svg {
 }
 .selection.selected:hover {
     background-color: #22FF22;
+}
+
+table tr:nth-of-type(even) {
+    background-color: transparent !important;
+}
+tbody {
+    border: initial;
+    background-color: transparent;
+}
+tbody td {
+    padding: 0;
+    color: #777;
 }

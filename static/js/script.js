@@ -27,6 +27,61 @@ var stop = false;
 var time_graph_padding_ms = 100;
 var svg = null;
 
+function make_graph(my_width, my_height, symbol, data) {
+    var my_margin = {top: 10, right: 20, bottom: 20, left: 20};
+    var my_graphHeight = my_height;
+    var container_el = $("<div></div>");
+    var my_svg = d3.select(container_el[0]).append("svg")
+        .attr("width", my_width + my_margin.left + my_margin.right)
+        .attr("height", my_height + my_margin.top + my_margin.bottom)
+        .append("g")
+        .attr("transform", "translate(" + my_margin.left + "," + my_margin.top + ")");
+
+    var x = d3.time.scale()
+        .domain([start_time, new Date()])
+        .range([0, my_width]);
+
+    var y_domain_max = (symbol == "A0") ? 1025 : 1;
+    var y = d3.scale.linear()
+        .domain([0, y_domain_max])
+        .range([my_graphHeight, 0]);
+
+    var line = d3.svg.line()
+        .x(function(d, i) { return x(d.timestamp); })
+        .y(function(d, i) { return y(d.value); })
+        .interpolate("step-after");
+    var area = d3.svg.area()
+        .x(function(d, i) { return x(d.timestamp); })
+        .y1(function(d, i) { return y(d.value); })
+        .y0(my_graphHeight)
+        .interpolate("step-after");
+
+    var chart = my_svg.append("g")
+        .attr("class", "chart "+symbol);
+
+    var tick_format = (symbol == "A0") ? null : '';
+    var xAxis = chart.append("g")
+        .attr("class", "x axis")
+        .attr("transform", "translate(0," + my_graphHeight + ")")
+        .call(d3.svg.axis().scale(x).tickFormat(tick_format).outerTickSize(0).orient("bottom"));
+    chart.append("g")
+        .attr("class", "y axis")
+        .call(d3.svg.axis().scale(y).ticks(1).orient("left"));
+    var clip_path = chart.append("g");
+    // var line_path = clip_path
+    //   .append("path")
+    //     .datum(data)
+    //     .attr("class", "line")
+    //     .attr("d", line);
+    var area_path = clip_path
+      .append("path")
+        .datum(data)
+        .attr("class", "area")
+        .attr("d", area);
+
+    return container_el;
+}
+
 function init_graph() {
     svg = d3.select("#svg_container").append("svg")
         .attr("width", width + margin.left + margin.right)
@@ -358,7 +413,7 @@ function create_graph_ui() {
     tr.append($("<td></td>"));  // blank top left corner
     $.each(tests, function(testName, testData) {
         if (testData.selected) {
-            td = $("<td></td>").text(testName);
+            td = $("<td></td>").addClass("heading-cell").text(testName);
             tr.append(td);
         }
     });
@@ -368,7 +423,7 @@ function create_graph_ui() {
     $.each(signals, function(signalName, signalData) {
         if (signalData.selected) {
             tr = $("<tr></tr>");
-            td = $("<td></td>").text(signalName);
+            td = $("<td></td>").addClass("heading-cell").text(signalName);
             tr.append(td);
             $.each(tests, function(testName, testData) {
                 if (testData.selected) {
@@ -385,12 +440,67 @@ function create_graph_ui() {
 }
 
 function generate_graph(signalName, testName) {
-    var el = $("<div></div>");
-    el.text(signalName+" for "+testName);
-    el.css("width", "300px");
-    el.css("height", "100px");
-    el.css("background-color", "blue");
-    return el;
+    var data = [];
+    return make_graph(300, 40, signalName, data);
+
+    /*
+    if (test_selection_state["LIVE"]) {
+        symbols = jQuery.extend({}, symbols_blank);
+        start_time = new Date();
+        first_time = null;
+        first_ticks = 0;
+        last_time = null;
+        received_data = false;
+        stop = false;
+        d3.select("#svg_container svg").remove();
+        $("#active-test-name").text("Live Data");
+        $("#save_test").show();
+        init_graph();
+        tick();
+        return;
+    }
+
+    $("#save_test").hide();
+
+    var test_number = 0;
+    $.each(test_selection_state, function(key, value) {
+        if (key != "LIVE" && key != "ALL" && value == true) {
+            test_number = key;
+        }
+    });
+
+    $.ajax({
+        type: "GET",
+        url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
+    }).done(function(data) {
+        console.log("received:");
+        console.log(data[0]);
+        d3.select("#svg_container svg").remove();
+        $("#active-test-name").text("Test "+test_number);
+        symbols = data[0].signals;
+        for (var key in symbols) {
+          var symbol_data = symbols[key].data;
+          for (var i=0; i<symbol_data.length; i++) {
+            symbols[key].data[i].timestamp = new Date(symbols[key].data[i].timestamp);
+          }
+        }
+
+        var x = data[0].signals.A0.data;
+        first_time = new Date(x[0].timestamp.valueOf());
+        last_time = new Date(x[x.length-1].timestamp.valueOf());
+        for (var key in symbols) {
+          var symbol_data = symbols[key].data;
+          for (var i=0; i<symbol_data.length; i++) {
+            var t = symbols[key].data[i].timestamp;
+            if (t<first_time) { first_time = t; console.log("found earlier"); }
+            if (t>last_time) { last_time = t; console.log("found later"); }
+          }
+        }
+        stop = true;
+        init_graph();
+        tick();
+    });
+    */
 }
 
 $(document).ready(function() {
@@ -402,241 +512,5 @@ $(document).ready(function() {
         setup_signal_and_test_selection_state_updating();
         setup_signal_and_test_selection_check();
     });
-    return;
 
-    $.ajax({
-        type: "GET",
-        url: "http://localhost:81/projects/mini-scanner/tests/"
-    }).done(function(data) {
-        var signal_selection_state = {"ALL": true, "D4": true, "D5": true, "D2": true, "D15": true, "D12": true, "D13": true, "A0": true};
-        var test_selection_state = {"ALL": false, "LIVE": true};
-
-        /* Add list of test names to Test Selection Dropdown */
-        $.each(data, function(index, value) {
-            var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
-            var test_select_el = $("<div></div>");
-            test_select_el.append($('<input id="checkbox_test_'+value.test_number+'" type="checkbox" data-test='+value.test_number+">"));
-            test_select_el.append($('<label for="checkbox_test_'+value.test_number+'">'+test_name+'</label>'));
-            $("#test-select-dropdown").append(test_select_el);
-            test_selection_state[value.test_number] = false;
-        });
-
-        $(document).foundation();
-
-        $('#signal-select-dropdown input').prop('checked', true);  // initially have all signals selected
-        $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
-
-        var all_signal_text = "All signals";
-        var all_test_text = "All tests";
-
-        $('#signal-select-dropdown input').change(function() {
-            var signal_selection = $(this).attr("data-signal");
-
-            // check if check already matches the state
-            if (this.checked == signal_selection_state[signal_selection]) {
-                return;
-            }
-
-            // select all
-            if (signal_selection == "ALL") {
-              for (var key in signal_selection_state) {
-                if (signal_selection_state.hasOwnProperty(key)) {
-                  signal_selection_state[key] = true;
-                }
-              }
-              $('#signal-select-dropdown input').prop('checked', true);
-              $("#signal-select").text(all_signal_text);
-              return;
-            }
-
-            if (this.checked) {
-              signal_selection_state[signal_selection] = true;
-              var all_signals_are_selected_now = true;
-              $.each(signal_selection_state, function(key, value) {
-                if (key != "ALL" && value == false) {
-                  all_signals_are_selected_now = false;
-                }
-              });
-
-              if (all_signals_are_selected_now) {
-                signal_selection_state["ALL"] = true;
-                $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', true);
-                $("#signal-select").text(all_signal_text);
-                return;
-              }
-            } else {
-              signal_selection_state[signal_selection] = false;
-              var all_signals_are_unselected_now = true;
-              $.each(signal_selection_state, function(key, value) {
-                if (key != "ALL" && value == true) {
-                  all_signals_are_unselected_now = false;
-                }
-              });
-              if (all_signals_are_unselected_now) {
-                signal_selection_state[signal_selection] = true;
-                $(this).prop('checked', true);
-                return;
-              }
-
-              // if something is being unchecked we can't be in the "all selected" state
-              signal_selection_state["ALL"] = false;
-              $('#signal-select-dropdown input').filter('[data-signal="ALL"]').prop('checked', false);
-            }
-
-            // Update label:
-            var label = "";
-            $.each(signal_selection_state, function(key, value) {
-              if (signal_selection_state[key] == true) {
-                label = (label == "") ? key : label+", "+key;
-              }
-            });
-            $("#signal-select").text(label);
-        });
-
-        ///////////////////// TEST SELECT
-        $('#test-select-dropdown input').change(function() {
-            var test_selection = $(this).attr("data-test");
-
-            // check if check already matches the state
-            if (this.checked == test_selection_state[test_selection]) {
-                return;
-            }
-
-            // select all
-            if (test_selection == "ALL") {
-              for (var key in test_selection_state) {
-                if (test_selection_state.hasOwnProperty(key)) {
-                  test_selection_state[key] = true;
-                }
-              }
-              test_selection_state["LIVE"] = false;
-              $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
-              $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', true);
-              $("#test-select").text(all_test_text);
-              return;
-            }
-
-            if (test_selection == "LIVE") {
-              // mark all other tests unselected and live selected
-              test_selection_state["LIVE"] = true;
-              $.each(test_selection_state, function(key, value) {
-                if (key != "LIVE") {
-                  test_selection_state[key] = false;
-                }
-              });
-              $('#test-select-dropdown input').filter('[data-test!="LIVE"]').prop('checked', false);
-              $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', true);
-              $("#test-select").text("LIVE DATA");
-              return;
-            }
-
-            test_selection_state["LIVE"] = false;
-            $('#test-select-dropdown input').filter('[data-test="LIVE"]').prop('checked', false);
-
-            if (this.checked) {
-              test_selection_state[test_selection] = true;
-              var all_signals_are_selected_now = true;
-              $.each(test_selection_state, function(key, value) {
-                if (key != "LIVE" && key != "ALL" && value == false) {
-                  all_signals_are_selected_now = false;
-                }
-              });
-
-              if (all_signals_are_selected_now) {
-                test_selection_state["ALL"] = true;
-                $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', true);
-                $("#test-select").text(all_test_text);
-                return;
-              }
-            } else {
-              test_selection_state[test_selection] = false;
-              var all_signals_are_unselected_now = true;
-              $.each(test_selection_state, function(key, value) {
-                if (key != "LIVE" && key != "ALL" && value == true) {
-                  all_signals_are_unselected_now = false;
-                }
-              });
-              if (all_signals_are_unselected_now) {
-                test_selection_state[test_selection] = true;
-                $(this).prop('checked', true);
-                return;
-              }
-
-              // if something is being unchecked we can't be in the "all selected" state
-              test_selection_state["ALL"] = false;
-              $('#test-select-dropdown input').filter('[data-test="ALL"]').prop('checked', false);
-            }
-
-            // Update label:
-            var label = "";
-            $.each(test_selection_state, function(key, value) {
-              if (key != "LIVE" && key != "ALL" && value == true) {
-                label = (label == "") ? "Test "+key : label+", Test "+key;
-              }
-            });
-            $("#test-select").text(label);
-        });
-
-        $("#save_test").click(save_live_data);
-
-        $("#test-select-dropdown").hover(function() {}, function() { 
-        //$(".test-select").click(function() {
-            if (test_selection_state["LIVE"]) {
-                symbols = jQuery.extend({}, symbols_blank);
-                start_time = new Date();
-                first_time = null;
-                first_ticks = 0;
-                last_time = null;
-                received_data = false;
-                stop = false;
-                d3.select("#svg_container svg").remove();
-                $("#active-test-name").text("Live Data");
-                $("#save_test").show();
-                init_graph();
-                tick();
-                return;
-            }
-
-            $("#save_test").hide();
-
-            var test_number = 0;
-            $.each(test_selection_state, function(key, value) {
-                if (key != "LIVE" && key != "ALL" && value == true) {
-                    test_number = key;
-                }
-            });
-
-            $.ajax({
-                type: "GET",
-                url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
-            }).done(function(data) {
-                console.log("received:");
-                console.log(data[0]);
-                d3.select("#svg_container svg").remove();
-                $("#active-test-name").text("Test "+test_number);
-                symbols = data[0].signals;
-                for (var key in symbols) {
-                  var symbol_data = symbols[key].data;
-                  for (var i=0; i<symbol_data.length; i++) {
-                    symbols[key].data[i].timestamp = new Date(symbols[key].data[i].timestamp);
-                  }
-                }
-
-                var x = data[0].signals.A0.data;
-                first_time = new Date(x[0].timestamp.valueOf());
-                last_time = new Date(x[x.length-1].timestamp.valueOf());
-                for (var key in symbols) {
-                  var symbol_data = symbols[key].data;
-                  for (var i=0; i<symbol_data.length; i++) {
-                    var t = symbols[key].data[i].timestamp;
-                    if (t<first_time) { first_time = t; console.log("found earlier"); }
-                    if (t>last_time) { last_time = t; console.log("found later"); }
-                  }
-                }
-                stop = true;
-                init_graph();
-                tick();
-            });
-        });
-    });
 });
