@@ -1,204 +1,120 @@
-//////////* Global Variables *////////////
-var symbols = {"D4": {"data":[], "i": 0}, 
-               "D5": {"data":[], "i": 1},
-               "D2": {"data":[], "i": 2},
-               "D15": {"data":[], "i": 3},
-               "D12": {"data":[], "i": 4},
-               "D13": {"data":[], "i": 5},
-               "A0": {"data":[], "i": 6}};
-var symbols_blank = {"D4": {"data":[], "i": 0}, 
-               "D5": {"data":[], "i": 1},
-               "D2": {"data":[], "i": 2},
-               "D15": {"data":[], "i": 3},
-               "D12": {"data":[], "i": 4},
-               "D13": {"data":[], "i": 5},
-               "A0": {"data":[], "i": 6}};
-var margin = {top: 20, right: 0, bottom: 20, left: 20+44},
-    width = 1000 - margin.left - margin.right,
-    height = 350 - margin.top - margin.bottom,
-    graphHeight = 30,
-    graphSpacing = 15;
-var start_time = new Date();
-var first_time = null;
-var first_ticks = 0;
-var last_time = null;
-var received_data = false;
-var stop = false;
-var time_graph_padding_ms = 100;
-var svg = null;
+/* Global Variables */
+var tests = {"LIVE": {"selected": true}},
+    signals = {},
+    selecting_state = false,
+    chart_data = {},
+    live_data_array = {},
+    start_time = new Date(),
+    stop = false,
+    time_graph_padding_ms = 100;
 
-function make_graph(my_width, my_height, symbol, data) {
-    var my_margin = {top: 10, right: 20, bottom: 20, left: 20};
-    var my_graphHeight = my_height;
-    var container_el = $("<div></div>");
-    var my_svg = d3.select(container_el[0]).append("svg")
-        .attr("width", my_width + my_margin.left + my_margin.right)
-        .attr("height", my_height + my_margin.top + my_margin.bottom)
-        .append("g")
-        .attr("transform", "translate(" + my_margin.left + "," + my_margin.top + ")");
+function timeSeriesChart() {
+  /* Modification of Mike Bostock's code http://bost.ocks.org/mike/chart/time-series-chart.js
+     while reading http://bost.ocks.org/mike/chart/
+  */
+  var margin = {top: 10, right: 10, bottom: 20, left: 10},
+      width = 760,
+      height = 120,
+      xValue = function(d) { return d[0]; },
+      yValue = function(d) { return d[1]; },
+      xScale = d3.time.scale(),
+      yScale = d3.scale.linear(),
+      xAxis = d3.svg.axis().scale(xScale).orient("bottom").tickSize(6, 0),
+      area = d3.svg.area().x(X).y1(Y);
+      ////line = d3.svg.line().x(X).y(Y);
 
-    var x = d3.time.scale()
-        .domain([start_time, new Date()])
-        .range([0, my_width]);
+  function chart(selection) {
+    selection.each(function(data) {
 
-    var y_domain_max = (symbol == "A0") ? 1025 : 1;
-    var y = d3.scale.linear()
-        .domain([0, y_domain_max])
-        .range([my_graphHeight, 0]);
+      // Convert data to standard representation greedily;
+      // this is needed for nondeterministic accessors.
+      data = data.map(function(d, i) {
+        return [xValue.call(data, d, i), yValue.call(data, d, i)];
+      });
 
-    var line = d3.svg.line()
-        .x(function(d, i) { return x(d.timestamp); })
-        .y(function(d, i) { return y(d.value); })
-        .interpolate("step-after");
-    var area = d3.svg.area()
-        .x(function(d, i) { return x(d.timestamp); })
-        .y1(function(d, i) { return y(d.value); })
-        .y0(my_graphHeight)
-        .interpolate("step-after");
+      // Update the x-scale.
+      xScale
+          .domain(d3.extent(data, function(d) { return d[0]; }))
+          .range([0, width - margin.left - margin.right]);
 
-    var chart = my_svg.append("g")
-        .attr("class", "chart "+symbol);
+      // Update the y-scale.
+      yScale
+          .domain([0, d3.max(data, function(d) { return d[1]; })])
+          .range([height - margin.top - margin.bottom, 0]);
 
-    var tick_format = (symbol == "A0") ? null : '';
-    var xAxis = chart.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + my_graphHeight + ")")
-        .call(d3.svg.axis().scale(x).tickFormat(tick_format).outerTickSize(0).orient("bottom"));
-    chart.append("g")
-        .attr("class", "y axis")
-        .call(d3.svg.axis().scale(y).ticks(1).orient("left"));
-    var clip_path = chart.append("g");
-    // var line_path = clip_path
-    //   .append("path")
-    //     .datum(data)
-    //     .attr("class", "line")
-    //     .attr("d", line);
-    var area_path = clip_path
-      .append("path")
-        .datum(data)
-        .attr("class", "area")
-        .attr("d", area);
+      // Select the svg element, if it exists.
+      var svg = d3.select(this).selectAll("svg").data([data]);
 
-    return container_el;
-}
+      // Otherwise, create the skeletal chart.
+      var gEnter = svg.enter().append("svg").append("g");
+      gEnter.append("path").attr("class", "area");
+      ////gEnter.append("path").attr("class", "line");
+      gEnter.append("g").attr("class", "x axis");
 
-function init_graph() {
-    svg = d3.select("#svg_container").append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-      .append("g")
-        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+      // Update the outer dimensions.
+      svg .attr("width", width)
+          .attr("height", height);
 
-    console.log(symbols);
+      // Update the inner dimensions.
+      var g = svg.select("g")
+          .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-    var spacing_count = 0;
+      // Update the area path.
+      g.select(".area")
+          .attr("d", area.y0(yScale.range()[0]).interpolate("step-after"));
 
-    for (var symbol in symbols) {
-        if (symbols.hasOwnProperty(symbol)) {
-            // do stuff
-            symbols[symbol].x = d3.time.scale()
-                .domain([start_time, new Date()])
-                .range([0, width-44]);
+      // Update the line path.
+      ////g.select(".line")
+      ////    .attr("d", line);
 
-            var y_domain_max = (symbol == "A0") ? 1025 : 1;
-            symbols[symbol].y = d3.scale.linear()
-                .domain([0, y_domain_max])
-                .range([graphHeight, 0]);
-
-            var interpolation = (symbol == "A0") ? "step-after" : "step-after";
-            symbols[symbol].line = d3.svg.line()
-                .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
-                .y(function(d, i) { return symbols[symbol].y(d.value); })
-                .interpolate(interpolation);
-            symbols[symbol].area = d3.svg.area()
-                .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
-                .y1(function(d, i) { return symbols[symbol].y(d.value); })
-                .y0(graphHeight)
-                .interpolate(interpolation);
-
-            symbols[symbol].tick_format = (symbol == "A0") ? null : '';
-            symbols[symbol].chart = svg.append("g")
-                .attr("class", "chart "+symbol)
-                .attr("transform", "translate(0," + (graphHeight+graphSpacing)*spacing_count + ")");
-            spacing_count += 1;
-            symbols[symbol].xAxis = symbols[symbol].chart.append("g")
-                .attr("class", "x axis")
-                .attr("transform", "translate(0," + graphHeight + ")")
-                .call(d3.svg.axis().scale(symbols[symbol].x).tickFormat(symbols[symbol].tick_format).outerTickSize(0).orient("bottom"));
-            symbols[symbol].chart.append("g")
-                .attr("class", "y axis")
-                .call(d3.svg.axis().scale(symbols[symbol].y).ticks(1).orient("left"));
-            symbols[symbol].clip_path = symbols[symbol].chart.append("g");
-            // symbols[symbol].line_path = symbols[symbol].clip_path
-            //   .append("path")
-            //     .datum(symbols[symbol].data)
-            //     .attr("class", "line")
-            //     .attr("d", symbols[symbol].line);
-            symbols[symbol].area_path = symbols[symbol].clip_path
-              .append("path")
-                .datum(symbols[symbol].data)
-                .attr("class", "area")
-                .attr("d", symbols[symbol].area);
-
-            symbols[symbol].chart.append("text")
-              .attr("x", -60)
-              .attr("y", graphHeight/2+10)
-              .text( function(d) { return symbol; })
-              .attr("class", "chartlabel");
-        }
-    }
-}
-
-init_graph();
-
-tick();
-
-function tick() {
-  for (var symbol in symbols) {
-    if (symbols.hasOwnProperty(symbol)) {
-      if (first_time != null && last_time != null) {
-        symbols[symbol].x = symbols[symbol].x.domain([first_time, last_time]);
-      } else {
-        symbols[symbol].x = symbols[symbol].x.domain([start_time, new Date()]);
-      }
-      symbols[symbol].xAxis = symbols[symbol].xAxis.call(d3.svg.axis().scale(symbols[symbol].x).tickFormat(symbols[symbol].tick_format).outerTickSize(0).orient("bottom"));
-
-      if (symbols[symbol].data.length > 0) {
-          var interpolation = (symbol == "A0") ? "step-after" : "step-after";
-
-          if (symbol != "A0") {
-            var last_element = jQuery.extend({}, symbols[symbol].data[symbols[symbol].data.length-1]);
-            //var last_element = symbols[symbol].data[symbols[symbol].data.length-1];
-            if (first_time != null && last_time != null) {
-              last_element.timestamp = last_time;
-            } else {
-              last_element.timestamp = new Date();
-            }
-            symbols[symbol].data.push(last_element);
-          }
-
-          symbols[symbol].line = d3.svg.line()
-                .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
-                .y(function(d, i) { return symbols[symbol].y(d.value); })
-                .interpolate(interpolation);
-          symbols[symbol].area = d3.svg.area()
-                .x(function(d, i) { return symbols[symbol].x(d.timestamp); })
-                .y1(function(d, i) { return symbols[symbol].y(d.value); })
-                .y0(graphHeight)
-                .interpolate(interpolation);
-          symbols[symbol].area_path.attr("d", symbols[symbol].area);
-          //symbols[symbol].line_path.attr("d", symbols[symbol].line);
-
-          if (symbol != "A0") {
-            symbols[symbol].data.pop(); // remove extension of last element
-          }
-      }
-    }
+      // Update the x-axis.
+      g.select(".x.axis")
+          .attr("transform", "translate(0," + yScale.range()[0] + ")")
+          .call(xAxis);
+    });
   }
 
-  if (!stop) {
-    setTimeout(tick, 1);
+  // The x-accessor for the path generator; xScale ∘ xValue.
+  function X(d) {
+    return xScale(d[0]);
   }
+
+  // The x-accessor for the path generator; yScale ∘ yValue.
+  function Y(d) {
+    return yScale(d[1]);
+  }
+
+  chart.margin = function(_) {
+    if (!arguments.length) return margin;
+    margin = _;
+    return chart;
+  };
+
+  chart.width = function(_) {
+    if (!arguments.length) return width;
+    width = _;
+    return chart;
+  };
+
+  chart.height = function(_) {
+    if (!arguments.length) return height;
+    height = _;
+    return chart;
+  };
+
+  chart.x = function(_) {
+    if (!arguments.length) return xValue;
+    xValue = _;
+    return chart;
+  };
+
+  chart.y = function(_) {
+    if (!arguments.length) return yValue;
+    yValue = _;
+    return chart;
+  };
+
+  return chart;
 }
 
 client = new Paho.MQTT.Client("m11.cloudmqtt.com", 39280,"hype_" + parseInt(Math.random() * 100, 10)); 
@@ -241,29 +157,13 @@ function onMessageArrived(message) {
             var v = parseInt(msg.value);
             var msg_tick = parseInt(msg.tick);
             if (!isNaN(v)) {
-                //msg.timestamp = new Date();
                 msg.value = v;
-                // if (received_data === false) {
-                //   //start_time = new Date();//msg.timestamp-1;
-                //   var st = new Date();
-                //   //start_time -= msg_tick;
-                //   start_time = new Date(st.valueOf()-msg_tick);
-                //   console.log("START TIME:");
-                //   console.log(start_time);
-                //   console.log("triggered by:");
-                //   console.log(msg.label);
-                // }
                 msg.timestamp = new Date(start_time.valueOf()+msg_tick);//new Date(dd);
-                if (received_data === false) {
-                  //msg.timestamp = new Date(start_time.valueOf()+msg_tick);
-                  first_time = new Date(msg.timestamp.valueOf());
-                  received_data = true;
+                if (msg.label in signals) {
+                    live_data_array[msg.label].push(msg);
                 } else {
-                  //msg.timestamp = new Date(first_time.valueOf()+msg_tick);//new Date(dd);
-                  last_time = new Date(msg.timestamp.valueOf());
+                    console.error("Received data outside the set of valid signals: "+msg.label);
                 }
-                //console.log(msg.timestamp);
-                symbols[msg.label].data.push(msg);
             }
         } else if (msg.type == "BREAK") {
             if (msg.value == "END") {
@@ -284,11 +184,6 @@ function onMessageArrived(message) {
     }
 }
 
-/* Global Variables */
-var tests = {"LIVE": {"selected": true}};
-var signals = {};
-var selecting_state = false;
-
 function get_summary_of_project(callback) {
     $.ajax({
         type: "GET",
@@ -296,6 +191,7 @@ function get_summary_of_project(callback) {
     }).done(function(data) {
         $.each(data.signals, function(index, signalName) {
             signals[signalName] = {"selected": true};
+            live_data_array[signalName] = [];
         });
         $.each(data.tests, function(index, value) {
             var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
@@ -394,7 +290,12 @@ function setup_signal_and_test_selection_check() {
                 display_el.text(all_selected_text);
             }
 
+            chart_data = {};  // clear old graph data;
             create_graph_ui();
+            fetch_chart_data();
+            if (stop) {
+                tick(); // tick once to update the live graph with the saved data
+            }
         }
         dropdown_el.hover(function() {}, update_selection);
         update_selection();  // Call first to make sure display text matches initial settings
@@ -428,8 +329,9 @@ function create_graph_ui() {
             $.each(tests, function(testName, testData) {
                 if (testData.selected) {
                     td = $("<td></td>");
-                    td.append(generate_graph(signalName, testName));
-                    tr.append(td); 
+                    var testNumber = (testName == "LIVE") ? "LIVE" : testData.test_number;
+                    generate_graph(signalName, testName, td, testNumber);
+                    tr.append(td);
                 }
             });
             table.append(tr);
@@ -439,69 +341,66 @@ function create_graph_ui() {
     $("#main").append(table);
 }
 
-function generate_graph(signalName, testName) {
+function generate_graph(signalName, testName, c, testNumber) {
     var data = [];
-    return make_graph(300, 40, signalName, data);
+    var chart = timeSeriesChart()
+        .x(function(d) { return d.timestamp; })
+        .y(function(d) { return d.value; })
+        .width(300)
+        .height(60);
+    var container_el = $("<div></div>");
+    c.append(container_el);
+    d3.select(container_el[0]).datum(data).call(chart);
 
-    /*
-    if (test_selection_state["LIVE"]) {
-        symbols = jQuery.extend({}, symbols_blank);
-        start_time = new Date();
-        first_time = null;
-        first_ticks = 0;
-        last_time = null;
-        received_data = false;
-        stop = false;
-        d3.select("#svg_container svg").remove();
-        $("#active-test-name").text("Live Data");
-        $("#save_test").show();
-        init_graph();
-        tick();
-        return;
+    if (!(testNumber in chart_data)) {
+        chart_data[testNumber] = {};
     }
+    chart_data[testNumber][signalName] = {"chart": chart, "el": d3.select(container_el[0])};
+}
 
-    $("#save_test").hide();
-
-    var test_number = 0;
-    $.each(test_selection_state, function(key, value) {
-        if (key != "LIVE" && key != "ALL" && value == true) {
-            test_number = key;
-        }
-    });
-
-    $.ajax({
+function fetch_test_data(test_number) {
+     $.ajax({
         type: "GET",
         url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
     }).done(function(data) {
-        console.log("received:");
-        console.log(data[0]);
-        d3.select("#svg_container svg").remove();
-        $("#active-test-name").text("Test "+test_number);
-        symbols = data[0].signals;
-        for (var key in symbols) {
-          var symbol_data = symbols[key].data;
-          for (var i=0; i<symbol_data.length; i++) {
-            symbols[key].data[i].timestamp = new Date(symbols[key].data[i].timestamp);
-          }
-        }
-
-        var x = data[0].signals.A0.data;
-        first_time = new Date(x[0].timestamp.valueOf());
-        last_time = new Date(x[x.length-1].timestamp.valueOf());
-        for (var key in symbols) {
-          var symbol_data = symbols[key].data;
-          for (var i=0; i<symbol_data.length; i++) {
-            var t = symbols[key].data[i].timestamp;
-            if (t<first_time) { first_time = t; console.log("found earlier"); }
-            if (t>last_time) { last_time = t; console.log("found later"); }
-          }
-        }
-        stop = true;
-        init_graph();
-        tick();
+        // console.log("received:");
+        // console.log(data[0]);
+        $.each(data[0].signals, function(signalName, signalData) {
+            if ((signalName in signals) && signals[signalName].selected) {
+                var data_tuples_array = signalData.data;
+                $.each(data_tuples_array, function(index, data_tuple) {
+                    data_tuples_array[index].timestamp = new Date(data_tuple.timestamp);
+                });
+                // update graph with new data;
+                chart_data[test_number][signalName].el.datum(data_tuples_array).call(chart_data[test_number][signalName].chart);
+            }
+        });
     });
-    */
 }
+
+function fetch_chart_data() {
+    $.each(tests, function(testName, testData) {
+        if (testData.selected && testName != "LIVE") {
+            fetch_test_data(testData.test_number);
+        }
+    });
+}
+
+function tick() {
+    // update graph with new data
+    if (tests["LIVE"].selected) {
+        $.each(signals, function(signalName, signalData) {
+            if (signalData.selected) {
+                chart_data["LIVE"][signalName].el.datum(live_data_array[signalName]).call(chart_data["LIVE"][signalName].chart);
+            }
+        });
+    }
+    if (!stop) {
+        setTimeout(tick, 1);
+    }
+}
+
+tick();
 
 $(document).ready(function() {
 

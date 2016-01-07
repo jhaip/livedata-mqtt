@@ -76,6 +76,10 @@ svg {
   font-size: 1.5rem;
 }
 
+.filter-row, .graphs-row {
+  padding-left: 2rem;
+}
+
 #signal-select, #test-select {
   margin: 0;
   padding: 0.3rem 0 0.3rem;
