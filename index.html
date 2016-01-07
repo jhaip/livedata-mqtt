@@ -1,13 +1,54 @@
-<!DOCTYPE HTML>
-<html>
-    <head>
-        <title>Live Data Viz via MQTT</title>
-        <link rel="stylesheet" type="text/css" href="style.css">
-    </head>
-    <body>    
-        <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
-        <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-        <script src="mqttws31.js" type="text/javascript"></script>
-        <script src="script.js" type="text/javascript"></script>
-    </body>
+<!doctype html>
+<html class="no-js" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live Data Viz via MQTT</title>
+    <link rel="stylesheet" href="css/foundation.css" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="row spaced-top spaced-bottom filter-row full-width">
+      <div class="small-12 columns">
+        <span class="muted">Showing</span>
+        <span id="signal-select" data-toggle="signal-select-dropdown">all signals</span>
+        <div class="small dropdown-pane" id="signal-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
+        </div>
+        <span class="muted">in</span>
+        <span id="test-select" data-toggle="test-select-dropdown">LIVE</span>
+        <div class="dropdown-pane" id="test-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
+        </div>
+        <span class="muted">.</span>
+      </div>
+    </div>
+    <div class="row graphs-row full-width">
+      <div class="small-12 columns">
+        <div id="main">
+          <div class="row">
+            <div class="small-12 columns">
+              <div id="svg_container"></div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="small-12 medium-6 columns">
+              <h2 id="active-test-name">Live Data</h2>
+              <h5>Notes</h5>
+              <textarea id="notes"></textarea>
+              <button id="save_notes" class="button block">Save Notes</button>
+              <button id="save_test" class="button block">Save Test to Database</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    <script src="js/vendor/jquery.min.js"></script>
+    <script src="js/vendor/what-input.min.js"></script>
+    <script src="js/foundation.min.js"></script>
+    <script src="js/mqttws31.js" type="text/javascript"></script>
+    <script src="js/script.js" type="text/javascript"></script>
+  </body>
 </html>

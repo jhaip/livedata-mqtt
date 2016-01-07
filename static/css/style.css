@@ -1,0 +1,127 @@
+.p-padded-top {
+    padding-top: 1.25rem;
+}
+.half-p-padded-top {
+    padding-top: 0.625rem;
+}
+.padded-top {
+    padding-top: 2.5rem;
+}
+.spaced-top {
+    margin-top: 2.5rem;
+}
+.spaced-bottom {
+    margin-bottom: 2.5rem;
+}
+.full-width {
+    width: 100%;
+    max-width: 100%;
+}
+.block {
+    display: block;
+}
+
+svg {
+  font: 10px sans-serif;
+}
+.line {
+  fill: none;
+  stroke: #666;
+  stroke-width: 2.5px;
+}
+
+.area {
+  fill: #6699FF;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #AAA;
+  shape-rendering: crispEdges;
+}
+.axis {
+  fill: #AAA;
+}
+
+.chartlabel {
+  fill: #777;
+  font-size: 16px;
+}
+
+#sidebar, #main {
+  float: left;
+}
+
+#sidebar {
+  width: 200px;
+  background-color: #EEE;
+  height: 100vh;
+}
+
+#main {
+  /*margin-left: 20px;*/
+}
+
+.test-select {
+  border-bottom: 1px solid #E0E0E0;
+  padding: 10px 10px 10px 10px;
+}
+
+.test-select:hover, .test-select.active {
+  background-color: #DDD;
+}
+
+.filter-row, td.heading-cell {
+  font-size: 1.5rem;
+}
+
+.filter-row, .graphs-row {
+  padding-left: 2rem;
+}
+
+#signal-select, #test-select {
+  margin: 0;
+  padding: 0.3rem 0 0.3rem;
+  border-bottom: 2px dotted #777;
+}
+#signal-select:hover, #test-select:hover {
+  cursor: pointer;
+}
+
+.muted {
+  color: #777;
+}
+
+.selection {
+    padding: 10px 20px;
+    cursor: pointer;
+    /* Disable text selection highlighting */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.selection.selected {
+    background-color: #66FF66;
+}
+.selection:hover {
+    background-color: #EEE;
+}
+.selection.selected:hover {
+    background-color: #22FF22;
+}
+
+table tr:nth-of-type(even) {
+    background-color: transparent !important;
+}
+tbody {
+    border: initial;
+    background-color: transparent;
+}
+tbody td {
+    padding: 0;
+    color: #777;
+}
