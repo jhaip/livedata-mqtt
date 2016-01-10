@@ -125,3 +125,14 @@ tbody td {
     padding: 0;
     color: #777;
 }
+
+tr.annotation-row td {
+    padding-left: 10px;
+    padding-right: 10px;
+    vertical-align: top;
+}
+tr.annotation-row textarea {
+    resize: vertical;
+    font-size: 12px;
+    height: 100px;
+}

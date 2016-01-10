@@ -220,29 +220,45 @@ function populate_selection_ui() {
 }
 
 function save_live_data() {
-    // get rid of the extra fields only really useful for D3
-    var symbols_copy = jQuery.extend({}, symbols);
-    for (var key in symbols_copy) {
-      if (symbols_copy.hasOwnProperty(key)) {
-        for (var key2 in symbols_copy[key]) {
-          if (symbols_copy[key].hasOwnProperty(key2)) {
-            if (key2 !== "data") {
-              delete symbols_copy[key][key2];
-            }
-          }
-        }
-      }
-    }
-    var dataa = {"notes": "", "signals": symbols_copy};
-    console.log(dataa);
+    var live_signals_to_save = $.extend({}, live_data_array);
+    $.each(live_signals_to_save, function(signalName, signalData) {
+        live_signals_to_save[signalName] = {"data": signalData};
+    });
+    var notes = $("textarea").filter('[data-testnumber="LIVE"]').val();
+    var data = {"notes": notes, "signals": live_signals_to_save};
     $.ajax({
         type: "POST",
         url: "http://localhost:81/projects/mini-scanner/test/",
-        data: JSON.stringify(dataa),
+        data: JSON.stringify(data),
         contentType: "application/json; charset=utf-8"
     }).done(function() {
         alert("done!");
         console.log("done!");
+    });
+}
+
+function delete_test(test_number) {
+    $.ajax({
+        type: "DELETE",
+        url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/",
+        contentType: "application/json; charset=utf-8"
+    }).done(function() {
+        alert("deleted!");
+        console.log("deleted! "+test_number);
+    });
+}
+
+function update_test(test_number) {
+    var notes = $("textarea").filter('[data-testnumber="'+test_number+'"]').val();
+    var data = {"notes": notes};
+    $.ajax({
+        type: "PATCH",
+        url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8"
+    }).done(function() {
+        alert("patched!");
+        console.log("patched!");
     });
 }
 
@@ -338,6 +354,39 @@ function create_graph_ui() {
         }
     });
 
+    /* Test Notes, Saving, etc. */
+    tr = $("<tr></tr>").addClass("annotation-row");
+    td = $("<td></td>");
+    tr.append(td);
+    $.each(tests, function(testName, testData) {
+        if (testData.selected) {
+            td = $("<td></td>");
+            var textarea = $("<textarea></textarea>");
+            var datatestnumber = (testName == "LIVE") ? "LIVE" : testData.test_number;
+            textarea.attr("data-testnumber", datatestnumber);
+            td.append(textarea);
+            if (testName == "LIVE") {
+                var save_button = $('<button class="button expanded">Save Live Data as new Test Case</button>');
+                save_button.click(save_live_data);
+                td.append(save_button);
+            } else {
+                var update_button = $('<button class="button expanded">Update this Test</button>');
+                update_button.click(function() { 
+                    update_test(testData.test_number);
+                });
+                td.append(update_button);
+
+                var delete_button = $('<button class="button expanded alert">Delete this Test</button>');
+                delete_button.click(function() { 
+                    delete_test(testData.test_number);
+                });
+                td.append(delete_button);
+            }
+            tr.append(td);
+        }
+    });
+    table.append(tr);
+
     $("#main").append(table);
 }
 
@@ -363,8 +412,6 @@ function fetch_test_data(test_number) {
         type: "GET",
         url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
     }).done(function(data) {
-        // console.log("received:");
-        // console.log(data[0]);
         $.each(data[0].signals, function(signalName, signalData) {
             if ((signalName in signals) && signals[signalName].selected) {
                 var data_tuples_array = signalData.data;
@@ -373,6 +420,8 @@ function fetch_test_data(test_number) {
                 });
                 // update graph with new data;
                 chart_data[test_number][signalName].el.datum(data_tuples_array).call(chart_data[test_number][signalName].chart);
+                // Updates Notes:
+                $("textarea").filter('[data-testnumber="'+test_number+'"]').val(data[0].notes);
             }
         });
     });

@@ -115,6 +115,33 @@ app.get('/projects/:project/tests/:test/', function(req, res) {
     });
 });
 
+app.delete('/projects/:project/tests/:test/', function(req, res) {
+    var tests = db.collection("tests");
+    tests.remove({"project": req.params.project, "test_number": parseInt(req.params.test)}, function(err, results) {
+        if (err) {
+            res.send("There was a problem getting the information from the database.");
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
+app.patch('/projects/:project/tests/:test/', function(req, res) {
+    var tests = db.collection("tests"),
+        notes = req.body.notes;
+    tests.update({"project": req.params.project, "test_number": parseInt(req.params.test)}, {$set: {notes: notes}}, function(err, results) {
+        if (err) {
+            res.send("There was a problem getting the information from the database.");
+        }
+        else {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify(results));
+        }
+    });
+});
+
 app.get('/projects/:project/tests/:test/signals/', function(req, res) {
     var tests = db.collection("tests");
     tests.find({"project": req.params.project, "test_number": parseInt(req.params.test)}, {"signals":1, _id: 0}).toArray(function(err, data) {
