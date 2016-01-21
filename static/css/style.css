@@ -93,8 +93,7 @@ svg {
   color: #777;
 }
 
-.selection {
-    padding: 10px 20px;
+.clickable {
     cursor: pointer;
     /* Disable text selection highlighting */
     -webkit-touch-callout: none;
@@ -103,6 +102,10 @@ svg {
     -moz-user-select: none;
     -ms-user-select: none;
     user-select: none;
+}
+
+.selection {
+    padding: 10px 20px;
 }
 .selection.selected {
     background-color: #66FF66;
@@ -135,4 +138,12 @@ tr.annotation-row textarea {
     resize: vertical;
     font-size: 12px;
     height: 100px;
+}
+
+#project-page .project {
+    padding: 10px;
+    background-color: #EEE;
+}
+#project-page .project:hover {
+    background-color: #AAA;
 }

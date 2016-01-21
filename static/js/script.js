@@ -204,7 +204,7 @@ function get_summary_of_project(callback) {
 function populate_selection_ui() {
     function add_selection_el(container_el, display_name, data_name, data_value, selected) {
         var selection_el = $("<div></div>");
-        selection_el.addClass("selection");
+        selection_el.addClass("selection").addClass("clickable");
         if (selected) {
             selection_el.addClass("selected");
         }
@@ -451,14 +451,90 @@ function tick() {
 
 tick();
 
-$(document).ready(function() {
+var router = null;
 
-    $(document).foundation();
+var LandingView = Backbone.View.extend({
+    initialize: function() {
+        this.render();
+    },
 
-    get_summary_of_project(function() {
-        populate_selection_ui();
-        setup_signal_and_test_selection_state_updating();
-        setup_signal_and_test_selection_check();
-    });
+    events: {
+        'click .project': 'select_project'
+    },
 
+    render: function() {
+        var data = [{'name': 'Project-Snail', 'description': 'Dec 3 - Dec 12'},
+                    {'name': 'Project-Rocket', 'description': 'Sept 1 - Nov 14'}];
+        var template = _.template($('#landing-template').html());
+        this.$el.html(template({projects: data}));
+        return this;
+    },
+
+    select_project: function(e) {
+        var projectName = $(e.currentTarget).attr("data-project");
+        router.navigate(projectName, {trigger: true});
+    }
+});
+
+var ProjectView = Backbone.View.extend({
+    initialize: function(opts) {
+        this.project = opts.project;
+        this.render();
+    },
+
+    render: function() {
+        var self = this;
+
+        var template = _.template($('#project-template').html(), {});
+        this.$el.html(template);
+        
+        $(document).foundation();
+
+        get_summary_of_project(function() {
+            populate_selection_ui();
+            setup_signal_and_test_selection_state_updating();
+            setup_signal_and_test_selection_check();
+        });
+        return this;
+    }
+});
+
+var ContainerView = Backbone.View.extend({
+    myChildView: null,
+
+    render: function() {
+        this.$el.html(this.myChildView.$el);
+        return this;
+    }
+});
+
+
+var myRouter = Backbone.Router.extend({
+    container: null,
+
+    initialize: function() {
+        this.container = new ContainerView({ el: $("#appContainer") });
+    },
+
+    routes: {
+        "": "landing",
+        ":project": "project_page"
+    },
+
+    landing: function() {
+        console.log("on the landing page!");
+        this.container.myChildView = new LandingView();
+        this.container.render();
+    },
+
+    project_page: function(project) {
+        console.log("on the "+project+" project page");
+        this.container.myChildView = new ProjectView({ project: project });
+        this.container.render();
+    }
+});
+
+$(document).ready(function () {
+    router = new myRouter();
+    Backbone.history.start();
 });

@@ -9,44 +9,66 @@
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
-    <div class="row spaced-top spaced-bottom filter-row full-width">
-      <div class="small-12 columns">
-        <span class="muted">Showing</span>
-        <span id="signal-select" data-toggle="signal-select-dropdown">all signals</span>
-        <div class="small dropdown-pane" id="signal-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
-        </div>
-        <span class="muted">in</span>
-        <span id="test-select" data-toggle="test-select-dropdown">LIVE</span>
-        <div class="dropdown-pane" id="test-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
-        </div>
-        <span class="muted">.</span>
-      </div>
-    </div>
-    <div class="row graphs-row full-width">
-      <div class="small-12 columns">
-        <div id="main">
-          <div class="row">
-            <div class="small-12 columns">
-              <div id="svg_container"></div>
-            </div>
-          </div>
+    <div id="appContainer"></div>
 
-          <div class="row">
-            <div class="small-12 medium-6 columns">
-              <h2 id="active-test-name">Live Data</h2>
-              <h5>Notes</h5>
-              <textarea id="notes"></textarea>
-              <button id="save_notes" class="button block">Save Notes</button>
-              <button id="save_test" class="button block">Save Test to Database</button>
+    <script type="text/template" id="landing-template">
+      <div id="project-page" class="row spaced-top">
+        <div class="small-12 medium-9 medium-centered large-6 large-centered columns">
+          <a class="button large">Create a new project</a>
+          <div class="p-padded-top">
+            <% _.each(projects, function(project) { %>
+              <div class="project clickable" data-project="<%= project.name %>">
+                <h3><%= project.name %></h3>
+                <p><%= project.description %></p>
+              </div>
+            <% }); %>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script type="text/template" id="project-template">
+      <div class="row spaced-top spaced-bottom filter-row full-width">
+        <div class="small-12 columns">
+          <span class="muted">Showing</span>
+          <span id="signal-select" data-toggle="signal-select-dropdown">all signals</span>
+          <div class="small dropdown-pane" id="signal-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
+          </div>
+          <span class="muted">in</span>
+          <span id="test-select" data-toggle="test-select-dropdown">LIVE</span>
+          <div class="dropdown-pane" id="test-select-dropdown" data-dropdown data-hover="true" data-hover-pane="true">
+          </div>
+          <span class="muted">.</span>
+        </div>
+      </div>
+      <div class="row graphs-row full-width">
+        <div class="small-12 columns">
+          <div id="main">
+            <div class="row">
+              <div class="small-12 columns">
+                <div id="svg_container"></div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="small-12 medium-6 columns">
+                <h2 id="active-test-name">Live Data</h2>
+                <h5>Notes</h5>
+                <textarea id="notes"></textarea>
+                <button id="save_notes" class="button block">Save Notes</button>
+                <button id="save_test" class="button block">Save Test to Database</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </script>
 
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
     <script src="js/vendor/jquery.min.js"></script>
     <script src="js/vendor/what-input.min.js"></script>
+    <script src="js/vendor/underscore-min.js"></script>
+    <script src="js/vendor/backbone-min.js"></script>
     <script src="js/foundation.min.js"></script>
     <script src="js/mqttws31.js" type="text/javascript"></script>
     <script src="js/script.js" type="text/javascript"></script>
