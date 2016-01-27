@@ -146,17 +146,68 @@ app.get('/projects/:project/tests/', function(req, res) {
     });
 });
 
-app.get('/projects/:project/tests/:test/', function(req, res) {
-    var tests = db.collection("tests");
-    tests.find({"project": req.params.project, "test_number": parseInt(req.params.test)}, {"notes":1,"signals":1, _id: 0}).toArray(function(err, data) {
-        if (err) {
-            res.send("There was a problem getting the information from the database.");
+function readSignalFile(project, test, signal, signal_data_received, d, done_callback) {
+    client.readFile("/projects/"+project+"/tests/"+test+"/signals/"+signal+".txt", function(err2, data2) {
+        if (err2) {
+            console.log(err2);
+            return;
         }
-        else {
-            res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify(data));
+        console.log(data2);
+
+        d[0]["signals"][signal]["data"] = JSON.parse(data2);
+
+        console.log("inside signal "+signal);
+        signal_data_received[signal] = true;
+        var all_done = true;
+        for (var s in signal_data_received) {
+            if (signal_data_received[s] == false) {
+                all_done = false;
+            }
+        }
+        if (all_done) {
+            console.log("ALL DONE!!!");
+            done_callback();
+        } else {
+            console.log("not quite done yet");
+            console.log(signal_data_received);
         }
     });
+}
+
+app.get('/projects/:project/tests/:test/', function(req, res) {
+    var signal_data_received = {}
+    client.readdir("/projects/"+req.params.project+"/tests/"+req.params.test+"/signals", function(err, data) {
+        if (err) {
+            console.log(err);
+            return;
+        }
+        console.log(data);
+        var d  = [{"signals": {}}];
+        for (var i=0; i<data.length; i+=1) {
+            var signal = data[i].split(".")[0];
+            d[0]["signals"][signal] = {};
+            signal_data_received[signal] = false;
+        }
+        for (var s in signal_data_received) {
+            // var signal = s.slice(0);
+            readSignalFile(req.params.project, req.params.test, s.slice(0), signal_data_received, d, function() {
+                console.log("Done!!!!");
+                res.setHeader('Content-Type', 'application/json');
+                res.send(JSON.stringify(d));
+            });
+        }
+    });
+
+    // var tests = db.collection("tests");
+    // tests.find({"project": req.params.project, "test_number": parseInt(req.params.test)}, {"notes":1,"signals":1, _id: 0}).toArray(function(err, data) {
+    //     if (err) {
+    //         res.send("There was a problem getting the information from the database.");
+    //     }
+    //     else {
+    //         res.setHeader('Content-Type', 'application/json');
+    //         res.send(JSON.stringify(data));
+    //     }
+    // });
 });
 
 app.delete('/projects/:project/tests/:test/', function(req, res) {

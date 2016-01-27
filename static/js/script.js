@@ -408,7 +408,8 @@ function generate_graph(signalName, testName, c, testNumber) {
 }
 
 function fetch_test_data(test_number) {
-     $.ajax({
+    console.log("FETCHING TEST DATA");
+    $.ajax({
         type: "GET",
         url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
     }).done(function(data) {
@@ -504,6 +505,7 @@ var ContainerView = Backbone.View.extend({
 
     render: function() {
         this.$el.html(this.myChildView.$el);
+        $(document).foundation();
         return this;
     }
 });
