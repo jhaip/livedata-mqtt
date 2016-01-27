@@ -6,6 +6,24 @@ var http = require('http').Server(app);
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 
+////////////
+var Dropbox = require("dropbox");
+var fs = require("fs");
+var path = require("path");
+var client = new Dropbox.Client({
+    key: "yro7r1co0ouombc",
+    secret: "7ngjfq5au877eui",
+    token: "6YpeQuDyPhIAAAAAAAAJJavn7qEfVrrjx5IT7rsFZ6fwUYjeJJvQKCMUJIJOTlBX"
+});
+
+client.authenticate(function(error, client) {
+    if (error) {
+        console.log(error);
+    }
+    console.log("Congratulations on authenticating! :)");
+});
+////////////
+
 var db;
 
 var url = 'mongodb://localhost:27017/test';
@@ -60,30 +78,56 @@ app.get('/projects/:project/summary/', function(req, res) {
     var tests = db.collection("tests");
 
     function get_summary_of_tests(callback) {
-        tests.find({"project": req.params.project}, {"test_number":1,"test_name":1, _id: 0}).toArray(function(err, data) {
+        client.readdir("/projects/"+req.params.project+"/tests", function(err, data) {
             if (err) {
-                res.send("There was a problem getting the information from the database.");
+                console.log(err);
+                return;
             }
-            else {
-                summary["tests"] = data;
-                callback(summary["tests"][0]["test_number"]);
+            console.log(data);
+            summary["tests"] = [];
+            for (var i=0; i<data.length; i+=1) {
+                summary["tests"].push({"test_number": data[i]});
             }
+            callback(summary["tests"][0]["test_number"]);
         });
+        // tests.find({"project": req.params.project}, {"test_number":1,"test_name":1, _id: 0}).toArray(function(err, data) {
+        //     if (err) {
+        //         res.send("There was a problem getting the information from the database.");
+        //     }
+        //     else {
+        //         summary["tests"] = data;
+        //         callback(summary["tests"][0]["test_number"]);
+        //     }
+        // });
     }
     function get_summary_of_signals(test_number) {
-            tests.find({"project": req.params.project, "test_number": test_number}, {"signals":1, _id: 0}).toArray(function(err, data) {
+        client.readdir("/projects/"+req.params.project+"/tests/"+test_number+"/signals", function(err, data) {
             if (err) {
-                res.send("There was a problem getting the information from the database.");
+                console.log(err);
+                return;
             }
-            else {
-                summary["signals"] = [];
-                for(var attributename in data[0].signals){
-                    summary["signals"].push(attributename);
-                }
-                res.setHeader('Content-Type', 'application/json');
-                res.send(JSON.stringify(summary));
+            console.log(data);
+            summary["signals"] = [];
+            for (var i=0; i<data.length; i+=1) {
+                var signal = data[i].split(".")[0];
+                summary["signals"].push(signal);
             }
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify(summary));
         });
+        // tests.find({"project": req.params.project, "test_number": test_number}, {"signals":1, _id: 0}).toArray(function(err, data) {
+        //     if (err) {
+        //         res.send("There was a problem getting the information from the database.");
+        //     }
+        //     else {
+        //         summary["signals"] = [];
+        //         for(var attributename in data[0].signals){
+        //             summary["signals"].push(attributename);
+        //         }
+        //         res.setHeader('Content-Type', 'application/json');
+        //         res.send(JSON.stringify(summary));
+        //     }
+        // });
     }
 
     get_summary_of_tests(get_summary_of_signals);
