@@ -53,23 +53,78 @@ app.get('/', function(req, res) {
 });
 
 app.get('/projects/', function(req, res) {
-    var tests = db.collection("tests");
-    tests.find({}, {"project":1}).toArray(function(err, data) {
-        if (err) {
-            res.send("There was a problem getting the information from the database.");
-        }
-        else {
-            var u = {}, a = [], v = 0;
-            for (var i=0; i<data.length; i++) {
-                v = data[i].project;
-                if (!u.hasOwnProperty(v)) {
-                    a.push(v);
-                    u[v] = 1;
-                }
+    function get_projects_list(callback) {
+        client.readdir("/projects/", function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
             }
+            console.log(data);
+            var d = [];
+            for (var i=0; i<data.length; i++) {
+                d.push({name: data[i], description: "TODO"});
+            }
+            callback(d);
+        });
+    }
+
+    get_projects_list(function(projects) {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify(projects));
+    });
+    // var tests = db.collection("tests");
+    // tests.find({}, {"project":1}).toArray(function(err, data) {
+    //     if (err) {
+    //         res.send("There was a problem getting the information from the database.");
+    //     }
+    //     else {
+    //         var u = {}, a = [], v = 0;
+    //         for (var i=0; i<data.length; i++) {
+    //             v = data[i].project;
+    //             if (!u.hasOwnProperty(v)) {
+    //                 a.push(v);
+    //                 u[v] = 1;
+    //             }
+    //         }
+    //         res.setHeader('Content-Type', 'application/json');
+    //         res.send(JSON.stringify(a));
+    //     }
+    // });
+});
+
+app.post('/projects/', function(req, res) {
+    var projectName = req.body.name,
+        projectDescription = req.body.description;
+
+    projectName = projectName.trim().split(" ").join("-");
+
+    function create_project_folder(callback) {
+        client.mkdir("/projects/"+projectName, function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log(data);
+            callback();
+        });
+    }
+
+    function create_project_test_folder(callback) {
+        client.mkdir("/projects/"+projectName+"/tests", function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log(data);
+            callback();
+        });
+    }
+
+    create_project_folder(function() {
+        create_project_test_folder(function() {
             res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify(a));
-        }
+            res.send(JSON.stringify("{}"));
+        });
     });
 });
 

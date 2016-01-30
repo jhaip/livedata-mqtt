@@ -184,10 +184,10 @@ function onMessageArrived(message) {
     }
 }
 
-function get_summary_of_project(callback) {
+function get_summary_of_project(projectName, callback) {
     $.ajax({
         type: "GET",
-        url: "http://localhost:81/projects/mini-scanner/summary/"
+        url: "http://localhost:81/projects/"+projectName+"/summary/"
     }).done(function(data) {
         $.each(data.signals, function(index, signalName) {
             signals[signalName] = {"selected": true};
@@ -226,40 +226,43 @@ function save_live_data() {
     });
     var notes = $("textarea").filter('[data-testnumber="LIVE"]').val();
     var data = {"notes": notes, "signals": live_signals_to_save};
-    $.ajax({
-        type: "POST",
-        url: "http://localhost:81/projects/mini-scanner/test/",
-        data: JSON.stringify(data),
-        contentType: "application/json; charset=utf-8"
-    }).done(function() {
-        alert("done!");
-        console.log("done!");
-    });
+    // TODO
+    // $.ajax({
+    //     type: "POST",
+    //     url: "http://localhost:81/projects/mini-scanner/test/",
+    //     data: JSON.stringify(data),
+    //     contentType: "application/json; charset=utf-8"
+    // }).done(function() {
+    //     alert("done!");
+    //     console.log("done!");
+    // });
 }
 
 function delete_test(test_number) {
-    $.ajax({
-        type: "DELETE",
-        url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/",
-        contentType: "application/json; charset=utf-8"
-    }).done(function() {
-        alert("deleted!");
-        console.log("deleted! "+test_number);
-    });
+    // TODO
+    // $.ajax({
+    //     type: "DELETE",
+    //     url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/",
+    //     contentType: "application/json; charset=utf-8"
+    // }).done(function() {
+    //     alert("deleted!");
+    //     console.log("deleted! "+test_number);
+    // });
 }
 
 function update_test(test_number) {
     var notes = $("textarea").filter('[data-testnumber="'+test_number+'"]').val();
     var data = {"notes": notes};
-    $.ajax({
-        type: "PATCH",
-        url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/",
-        data: JSON.stringify(data),
-        contentType: "application/json; charset=utf-8"
-    }).done(function() {
-        alert("patched!");
-        console.log("patched!");
-    });
+    // TODO
+    // $.ajax({
+    //     type: "PATCH",
+    //     url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/",
+    //     data: JSON.stringify(data),
+    //     contentType: "application/json; charset=utf-8"
+    // }).done(function() {
+    //     alert("patched!");
+    //     console.log("patched!");
+    // });
 }
 
 function setup_signal_and_test_selection_state_updating() {
@@ -284,7 +287,7 @@ function setup_signal_and_test_selection_state_updating() {
     });
 }
 
-function setup_signal_and_test_selection_check() {
+function setup_signal_and_test_selection_check(projectName) {
     function test_selection(dropdown_el, display_el, state_object, all_selected_text) {
         function update_selection() {
             var number_of_state_selections = 0;
@@ -308,13 +311,13 @@ function setup_signal_and_test_selection_check() {
 
             chart_data = {};  // clear old graph data;
             create_graph_ui();
-            fetch_chart_data();
+            fetch_chart_data(projectName);
             if (stop) {
                 tick(); // tick once to update the live graph with the saved data
             }
         }
         dropdown_el.hover(function() {}, update_selection);
-        update_selection();  // Call first to make sure display text matches initial settings
+        update_selection(projectName);  // Call first to make sure display text matches initial settings
     }
     test_selection($("#signal-select-dropdown"), $("#signal-select"), signals, "all signals");
     test_selection($("#test-select-dropdown"), $("#test-select"), tests, "all tests");
@@ -407,11 +410,11 @@ function generate_graph(signalName, testName, c, testNumber) {
     chart_data[testNumber][signalName] = {"chart": chart, "el": d3.select(container_el[0])};
 }
 
-function fetch_test_data(test_number) {
+function fetch_test_data(projectName, test_number) {
     console.log("FETCHING TEST DATA");
     $.ajax({
         type: "GET",
-        url: "http://localhost:81/projects/mini-scanner/tests/"+test_number+"/"
+        url: "http://localhost:81/projects/"+projectName+"/tests/"+test_number+"/"
     }).done(function(data) {
         $.each(data[0].signals, function(signalName, signalData) {
             if ((signalName in signals) && signals[signalName].selected) {
@@ -428,10 +431,10 @@ function fetch_test_data(test_number) {
     });
 }
 
-function fetch_chart_data() {
+function fetch_chart_data(projectName) {
     $.each(tests, function(testName, testData) {
         if (testData.selected && testName != "LIVE") {
-            fetch_test_data(testData.test_number);
+            fetch_test_data(projectName, testData.test_number);
         }
     });
 }
@@ -457,23 +460,55 @@ var router = null;
 var LandingView = Backbone.View.extend({
     initialize: function() {
         this.render();
+        this.data = [];
+        this.fetch_projects_list();
     },
 
     events: {
-        'click .project': 'select_project'
+        'click .project': 'select_project',
+        'click #createNewProjectButton': 'create_new_project'
+    },
+
+    fetch_projects_list: function() {
+        var that = this;
+        $.ajax({
+            type: "GET",
+            url: "http://localhost:81/projects/",
+            contentType: "application/json; charset=utf-8"
+        }).done(function(data) {
+            console.log(data);
+            that.data = data;
+            that.render();
+        });
     },
 
     render: function() {
-        var data = [{'name': 'Project-Snail', 'description': 'Dec 3 - Dec 12'},
-                    {'name': 'Project-Rocket', 'description': 'Sept 1 - Nov 14'}];
         var template = _.template($('#landing-template').html());
-        this.$el.html(template({projects: data}));
+        this.$el.html(template({projects: this.data}));
+
+        $(document).foundation();
+
         return this;
     },
 
     select_project: function(e) {
         var projectName = $(e.currentTarget).attr("data-project");
         router.navigate(projectName, {trigger: true});
+    },
+
+    create_new_project: function(e) {
+        var projectName = $("#newProjectName").val();
+        var projectDescription = $("#newProjectDescription").val();
+        var data = {name: projectName, description: projectDescription};
+        $.ajax({
+            type: "POST",
+            url: "http://localhost:81/projects/",
+            data: JSON.stringify(data),
+            contentType: "application/json; charset=utf-8"
+        }).done(function() {
+            $('#newProjectModal').foundation('close');
+            router.navigate(projectName, {trigger: true});
+        });
     }
 });
 
@@ -491,10 +526,10 @@ var ProjectView = Backbone.View.extend({
         
         $(document).foundation();
 
-        get_summary_of_project(function() {
+        get_summary_of_project(self.project, function() {
             populate_selection_ui();
             setup_signal_and_test_selection_state_updating();
-            setup_signal_and_test_selection_check();
+            setup_signal_and_test_selection_check(self.project);
         });
         return this;
     }

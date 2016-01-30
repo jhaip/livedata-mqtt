@@ -14,7 +14,7 @@
     <script type="text/template" id="landing-template">
       <div id="project-page" class="row spaced-top">
         <div class="small-12 medium-9 medium-centered large-6 large-centered columns">
-          <a class="button large">Create a new project</a>
+          <a class="button large" data-open="newProjectModal">Create a new project</a>
           <div class="p-padded-top">
             <% _.each(projects, function(project) { %>
               <div class="project clickable" data-project="<%= project.name %>">
@@ -23,6 +23,20 @@
               </div>
             <% }); %>
           </div>
+        </div>
+
+        <div class="reveal" id="newProjectModal" data-reveal>
+          <h1>Create a new project</h1>
+          <label>Project Name
+            <input id="newProjectName" type="text" placeholder="">
+          </label>
+          <label>Description
+            <input id="newProjectDescription" type="text" placeholder="">
+          </label>
+          <a id="createNewProjectButton" class="button large">Create Project</a>
+          <button class="close-button" data-close aria-label="Close modal" type="button">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
       </div>
     </script>
