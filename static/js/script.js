@@ -1,5 +1,5 @@
 /* Global Variables */
-var tests = {"LIVE": {"selected": true}},
+var tests = {"LIVE": {"selected": false}},
     signals = {},
     selecting_state = false,
     chart_data = {},
@@ -117,70 +117,72 @@ function timeSeriesChart() {
   return chart;
 }
 
-client = new Paho.MQTT.Client("m11.cloudmqtt.com", 39280,"hype_" + parseInt(Math.random() * 100, 10)); 
-client.onConnectionLost = onConnectionLost;
-client.onMessageArrived = onMessageArrived;
-var options = {
-    useSSL: true,
-    userName: "zettlmtm",
-    password: "VOUbRcmhjffA",
-    onSuccess:onConnect,
-    onFailure:doFail
-}
-client.connect(options);
-
-function onConnect() {
-    console.log("onConnect");
-    client.subscribe("/outTopic");
-    message = new Paho.MQTT.Message("Hello CloudMQTT from websocket hype");
-    message.destinationName = "/outTopic";
-    client.send(message); 
-}
-
-function doFail(e){
-    console.log(e);
-}
-
-function onConnectionLost(responseObject) {
-    if (responseObject.errorCode !== 0) {
-        console.log("onConnectionLost:"+responseObject.errorMessage);
+function init_mqtt() {
+    client = new Paho.MQTT.Client("m11.cloudmqtt.com", 39280,"hype_" + parseInt(Math.random() * 100, 10)); 
+    client.onConnectionLost = onConnectionLost;
+    client.onMessageArrived = onMessageArrived;
+    var options = {
+        useSSL: true,
+        userName: "zettlmtm",
+        password: "VOUbRcmhjffA",
+        onSuccess:onConnect,
+        onFailure:doFail
     }
-}
+    client.connect(options);
 
-function onMessageArrived(message) {
-    //console.log("onMessageArrived:"+message.payloadString);
-    try {
-        msg = JSON.parse(message.payloadString);
-        //console.log(msg);
+    function onConnect() {
+        console.log("onConnect");
+        client.subscribe("/outTopic");
+        message = new Paho.MQTT.Message("Hello CloudMQTT from websocket hype");
+        message.destinationName = "/outTopic";
+        client.send(message); 
+    }
 
-        if (msg.type == "BINARY" && !isNaN(msg.value)) {
-            var v = parseInt(msg.value);
-            var msg_tick = parseInt(msg.tick);
-            if (!isNaN(v)) {
-                msg.value = v;
-                msg.timestamp = new Date(start_time.valueOf()+msg_tick);//new Date(dd);
-                if (msg.label in signals) {
-                    live_data_array[msg.label].push(msg);
-                } else {
-                    console.error("Received data outside the set of valid signals: "+msg.label);
-                }
-            }
-        } else if (msg.type == "BREAK") {
-            if (msg.value == "END") {
-                console.log("END");
-                setTimeout(function() {
-                  stop = true;
-                }, time_graph_padding_ms);
-            }
-        } else if (msg.type == "TEXT") {
-            console.log("Update: "+msg.value);
-        } else {
-            console.error("Bad input:");
-            console.error(msg);
-        }
-    } catch (e) {
-        console.log("error");
+    function doFail(e){
         console.log(e);
+    }
+
+    function onConnectionLost(responseObject) {
+        if (responseObject.errorCode !== 0) {
+            console.log("onConnectionLost:"+responseObject.errorMessage);
+        }
+    }
+
+    function onMessageArrived(message) {
+        //console.log("onMessageArrived:"+message.payloadString);
+        try {
+            msg = JSON.parse(message.payloadString);
+            //console.log(msg);
+
+            if (msg.type == "BINARY" && !isNaN(msg.value)) {
+                var v = parseInt(msg.value);
+                var msg_tick = parseInt(msg.tick);
+                if (!isNaN(v)) {
+                    msg.value = v;
+                    msg.timestamp = new Date(start_time.valueOf()+msg_tick);//new Date(dd);
+                    if (msg.label in signals) {
+                        live_data_array[msg.label].push(msg);
+                    } else {
+                        console.error("Received data outside the set of valid signals: "+msg.label);
+                    }
+                }
+            } else if (msg.type == "BREAK") {
+                if (msg.value == "END") {
+                    console.log("END");
+                    setTimeout(function() {
+                      stop = true;
+                    }, time_graph_padding_ms);
+                }
+            } else if (msg.type == "TEXT") {
+                console.log("Update: "+msg.value);
+            } else {
+                console.error("Bad input:");
+                console.error(msg);
+            }
+        } catch (e) {
+            console.log("error");
+            console.log(e);
+        }
     }
 }
 
@@ -195,7 +197,7 @@ function get_summary_of_project(projectName, callback) {
         });
         $.each(data.tests, function(index, value) {
             var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
-            tests[test_name] = {"test_name": value.test_name, "test_number": value.test_number, "selected": false};
+            tests[test_name] = {"test_name": value.test_name, "test_number": value.test_number, "selected": true};
         });
         callback();
     });
@@ -535,6 +537,21 @@ var ProjectView = Backbone.View.extend({
     }
 });
 
+var LiveDataView = Backbone.View.extend({
+    initialize: function(opts) {
+        this.render();
+
+        init_mqtt();
+    },
+
+    render: function() {
+        var template = _.template($('#live-data-template').html(), {});
+        this.$el.html(template);
+        $(document).foundation();
+        return this;
+    }
+});
+
 var ContainerView = Backbone.View.extend({
     myChildView: null,
 
@@ -555,6 +572,7 @@ var myRouter = Backbone.Router.extend({
 
     routes: {
         "": "landing",
+        "live": "live_data_page",
         ":project": "project_page"
     },
 
@@ -567,6 +585,11 @@ var myRouter = Backbone.Router.extend({
     project_page: function(project) {
         console.log("on the "+project+" project page");
         this.container.myChildView = new ProjectView({ project: project });
+        this.container.render();
+    },
+
+    live_data_page: function() {
+        this.container.myChildView = new LiveDataView();
         this.container.render();
     }
 });
