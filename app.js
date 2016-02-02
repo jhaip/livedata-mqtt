@@ -143,7 +143,7 @@ app.get('/projects/:project/summary/', function(req, res) {
             for (var i=0; i<data.length; i+=1) {
                 summary["tests"].push({"test_number": data[i]});
             }
-            callback(summary["tests"][0]["test_number"]);
+            callback(summary["tests"][summary["tests"].length-1]["test_number"]);
         });
         // tests.find({"project": req.params.project}, {"test_number":1,"test_name":1, _id: 0}).toArray(function(err, data) {
         //     if (err) {
@@ -306,29 +306,123 @@ app.get('/projects/:project/tests/:test/signals/', function(req, res) {
 });
 
 app.post('/projects/:project/test/', function (req, res) {
-    var data = req.body;
-    data.project = req.params.project;
-
-    var tests = db.collection("tests");
-    
-    tests.find({"project": req.params.project}, {"test_number":1, _id: 0}).toArray(function(err, project_numbers) {
-        if (err) {
-            data.test_number = 0;
-        }
-        else {
-            var new_test_number = 0;
-            for (var i=0; i<project_numbers.length; i++) {
-                var project_test_number = project_numbers[i].test_number;
-                if (project_test_number+1 > new_test_number) {
-                    new_test_number = project_test_number+1;
-                }
+    var summary = {};
+    function get_summary_of_tests(callback) {
+        client.readdir("/projects/"+req.params.project+"/tests", function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
             }
-            data.test_number = new_test_number;
+            console.log(data);
+            summary["tests"] = [];
+            for (var i=0; i<data.length; i+=1) {
+                summary["tests"].push({"test_number": data[i]});
+            }
+
+
+            var last_test = '0';
+            if (summary["tests"].length > 0) {
+                last_test = summary["tests"][summary["tests"].length-1]["test_number"];
+            }
+            console.log("Last test: "+last_test);
+            console.log(!isNaN(last_test));
+            if (!isNaN(last_test)) {
+                callback(parseInt(last_test));
+            }
+        });
+    }
+
+    function create_project_test_folder(testName, callback) {
+        client.mkdir("/projects/"+req.params.project+"/tests/"+testName, function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log(data);
+            callback();
+        });
+    }
+
+    function create_project_test_signals_folder(testName, callback) {
+        client.mkdir("/projects/"+req.params.project+"/tests/"+testName+"/signals", function(err, data) {
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log(data);
+            callback();
+        });
+    }
+
+    function create_project_test_notes_file(testName, callback) {
+        var notes_txt = req.body.notes;
+        client.writeFile("/projects/"+req.params.project+"/tests/"+testName+"/notes.txt", notes_txt, function(err, stat){
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log("File saved as revision " + stat.versionTag);
+            callback();
+        });
+    }
+
+    function save_signal(testName, signal, signalData) {
+        client.writeFile("/projects/"+req.params.project+"/tests/"+testName+"/signals/"+signal+".txt", JSON.stringify(signalData), function(err, stat){
+            if (err) {
+                console.log(err);
+                return;
+            }
+            console.log("File saved as revision " + stat.versionTag);
+        });
+    }
+
+    function save_signal_data(testName, callback) {
+        var signals = req.body.signals;
+        for (var signal in signals) {
+            var signalData = signals[signal].data;
+            console.log(signal);
+            console.log(signalData.length);
+            save_signal(testName, signal, signalData);  // TODO: bad to be calling the callback before the saving is finished!
         }
-        tests.insert(data);  // save the data
-        res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify(data));
+        callback();
+    }
+
+    get_summary_of_tests(function(last_test_number) {
+        var testName = last_test_number+1;  // folders are named just numbers
+        create_project_test_folder(testName, function() {
+            create_project_test_signals_folder(testName, function() {
+                create_project_test_notes_file(testName, function() {
+                    save_signal_data(testName, function() {
+                        res.setHeader('Content-Type', 'application/json');
+                        res.send(JSON.stringify("{name: "+testName+"}"));
+                    });
+                });
+            });
+        });
     });
+    // var data = req.body;
+    // data.project = req.params.project;
+
+    // var tests = db.collection("tests");
+    
+    // tests.find({"project": req.params.project}, {"test_number":1, _id: 0}).toArray(function(err, project_numbers) {
+    //     if (err) {
+    //         data.test_number = 0;
+    //     }
+    //     else {
+    //         var new_test_number = 0;
+    //         for (var i=0; i<project_numbers.length; i++) {
+    //             var project_test_number = project_numbers[i].test_number;
+    //             if (project_test_number+1 > new_test_number) {
+    //                 new_test_number = project_test_number+1;
+    //             }
+    //         }
+    //         data.test_number = new_test_number;
+    //     }
+    //     tests.insert(data);  // save the data
+    //     res.setHeader('Content-Type', 'application/json');
+    //     res.send(JSON.stringify(data));
+    // });
 });
 
 http.listen(81, function(){

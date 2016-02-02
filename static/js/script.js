@@ -118,6 +118,7 @@ function timeSeriesChart() {
 }
 
 function init_mqtt() {
+    console.log("in init_mqtt()");
     client = new Paho.MQTT.Client("m11.cloudmqtt.com", 39280,"hype_" + parseInt(Math.random() * 100, 10)); 
     client.onConnectionLost = onConnectionLost;
     client.onMessageArrived = onMessageArrived;
@@ -160,11 +161,16 @@ function init_mqtt() {
                 if (!isNaN(v)) {
                     msg.value = v;
                     msg.timestamp = new Date(start_time.valueOf()+msg_tick);//new Date(dd);
-                    if (msg.label in signals) {
-                        live_data_array[msg.label].push(msg);
-                    } else {
-                        console.error("Received data outside the set of valid signals: "+msg.label);
+                    // if (msg.label in signals) {
+                    //     live_data_array[msg.label].push(msg);
+                    // } else {
+                    //     console.error("Received data outside the set of valid signals: "+msg.label);
+                    // }
+                    if (!(msg.label in live_data_array)) {
+                        live_data_array[msg.label] = [];
+                        // create new chart?
                     }
+                    live_data_array[msg.label].push(msg);
                 }
             } else if (msg.type == "BREAK") {
                 if (msg.value == "END") {
@@ -193,7 +199,7 @@ function get_summary_of_project(projectName, callback) {
     }).done(function(data) {
         $.each(data.signals, function(index, signalName) {
             signals[signalName] = {"selected": true};
-            live_data_array[signalName] = [];
+            // live_data_array[signalName] = [];  // let the live data create it's own signal groups
         });
         $.each(data.tests, function(index, value) {
             var test_name = (value.test_name) ? value.test_name : "Test "+value.test_number
@@ -221,23 +227,23 @@ function populate_selection_ui() {
     });
 }
 
-function save_live_data() {
+function save_live_data(projectName) {
+    console.log("Saving to project "+projectName);
     var live_signals_to_save = $.extend({}, live_data_array);
     $.each(live_signals_to_save, function(signalName, signalData) {
         live_signals_to_save[signalName] = {"data": signalData};
     });
     var notes = $("textarea").filter('[data-testnumber="LIVE"]').val();
     var data = {"notes": notes, "signals": live_signals_to_save};
-    // TODO
-    // $.ajax({
-    //     type: "POST",
-    //     url: "http://localhost:81/projects/mini-scanner/test/",
-    //     data: JSON.stringify(data),
-    //     contentType: "application/json; charset=utf-8"
-    // }).done(function() {
-    //     alert("done!");
-    //     console.log("done!");
-    // });
+    $.ajax({
+        type: "POST",
+        url: "http://localhost:81/projects/"+projectName+"/test/",
+        data: JSON.stringify(data),
+        contentType: "application/json; charset=utf-8"
+    }).done(function() {
+        alert("done!");
+        console.log("done!");
+    });
 }
 
 function delete_test(test_number) {
@@ -312,7 +318,7 @@ function setup_signal_and_test_selection_check(projectName) {
             }
 
             chart_data = {};  // clear old graph data;
-            create_graph_ui();
+            create_graph_ui(projectName);
             fetch_chart_data(projectName);
             if (stop) {
                 tick(); // tick once to update the live graph with the saved data
@@ -325,8 +331,9 @@ function setup_signal_and_test_selection_check(projectName) {
     test_selection($("#test-select-dropdown"), $("#test-select"), tests, "all tests");
 }
 
-function create_graph_ui() {
+function create_graph_ui(projectName) {
     $("#main").empty();
+    console.log("main should be empty");
     var table = $("<table></table>");
     var tr, td;
 
@@ -372,7 +379,9 @@ function create_graph_ui() {
             td.append(textarea);
             if (testName == "LIVE") {
                 var save_button = $('<button class="button expanded">Save Live Data as new Test Case</button>');
-                save_button.click(save_live_data);
+                save_button.click(function() {
+                    save_live_data(projectName);
+                });
                 td.append(save_button);
             } else {
                 var update_button = $('<button class="button expanded">Update this Test</button>');
@@ -395,12 +404,41 @@ function create_graph_ui() {
     $("#main").append(table);
 }
 
-function generate_graph(signalName, testName, c, testNumber) {
+function add_new_signal_to_graph_ui(signalName) {
+    var tableAnnotationRow = $("table tr.annotation-row");
+
+    var tr = $("<tr></tr>"),
+        td = $("<td></td>").addClass("heading-cell").text(signalName);
+    tr.append(td);
+
+    td = $("<td></td>");
+    generate_graph(signalName, "LIVE", td, "LIVE", 900);
+    tr.append(td);
+
+    tableAnnotationRow.before(tr);
+}
+
+function populate_live_data_annotation_row(projectName) {
+    var tr = $("tr.annotation-row"),
+        td = $("<td></td>");
+    var textarea = $("<textarea></textarea>");
+    textarea.attr("data-testnumber", "LIVE");
+    td.append(textarea);
+    var save_button = $('<button class="button expanded">Save Live Data as new Test Case</button>');
+    save_button.click(function() {
+        save_live_data(projectName)
+    });
+    td.append(save_button);
+    tr.append(td);
+}
+
+function generate_graph(signalName, testName, c, testNumber, w) {
+    var w = typeof w !== 'undefined' ?  w : 300;
     var data = [];
     var chart = timeSeriesChart()
         .x(function(d) { return d.timestamp; })
         .y(function(d) { return d.value; })
-        .width(300)
+        .width(w)
         .height(60);
     var container_el = $("<div></div>");
     c.append(container_el);
@@ -443,13 +481,21 @@ function fetch_chart_data(projectName) {
 
 function tick() {
     // update graph with new data
-    if (tests["LIVE"].selected) {
-        $.each(signals, function(signalName, signalData) {
-            if (signalData.selected) {
-                chart_data["LIVE"][signalName].el.datum(live_data_array[signalName]).call(chart_data["LIVE"][signalName].chart);
-            }
-        });
-    }
+    // if (tests["LIVE"].selected) {
+    //     $.each(signals, function(signalName, signalData) {
+    //         if (signalData.selected) {
+    //             chart_data["LIVE"][signalName].el.datum(live_data_array[signalName]).call(chart_data["LIVE"][signalName].chart);
+    //         }
+    //     });
+    // }
+    $.each(live_data_array, function(signalName, signalData) {
+        if (!(signalName in chart_data["LIVE"])) {
+            // this is a new signal that doesn't have a graph yet
+            // generate a graph and add it as a new row to the table
+            add_new_signal_to_graph_ui(signalName);
+        }
+        chart_data["LIVE"][signalName].el.datum(live_data_array[signalName]).call(chart_data["LIVE"][signalName].chart);
+    });
     if (!stop) {
         setTimeout(tick, 1);
     }
@@ -547,7 +593,10 @@ var LiveDataView = Backbone.View.extend({
     render: function() {
         var template = _.template($('#live-data-template').html(), {});
         this.$el.html(template);
+
         $(document).foundation();
+
+        
         return this;
     }
 });
@@ -558,6 +607,7 @@ var ContainerView = Backbone.View.extend({
     render: function() {
         this.$el.html(this.myChildView.$el);
         $(document).foundation();
+        console.log($("#main"));
         return this;
     }
 });
@@ -591,6 +641,9 @@ var myRouter = Backbone.Router.extend({
     live_data_page: function() {
         this.container.myChildView = new LiveDataView();
         this.container.render();
+        chart_data["LIVE"] = {};  // TODO: put this somewhere more appropriate
+        create_graph_ui("Mini-Scanner");
+        populate_live_data_annotation_row("Mini-Scanner");
     }
 });
 
