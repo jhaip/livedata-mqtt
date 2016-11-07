@@ -1,0 +1,31 @@
+{
+    "code": {
+        "firmware": {
+            "commit": "63dc0e637b3323d653dafc5469a5953e70710d50",
+            "files": ["spark-photon/mqtt_photon_potentiometer"]
+        }
+    },
+    "media": [
+        {
+            "url": "https://www.dropbox.com/s/b624qaivaide24a/Photo%20Nov%2006%2C%207%2056%2037%20PM.jpg?dl=0"
+        },
+        {
+            "url": "https://www.dropbox.com/s/joihysvvgo13ojt/Photo%20Nov%2006%2C%207%2056%2051%20PM.jpg?dl=0"
+        },
+        {
+            "url": "https://www.dropbox.com/s/ah4hmykflr9q282/Screen%20Shot%202016-11-06%20at%208.02.23%20PM.png?dl=0"
+        },
+        {
+            "url": "https://www.dropbox.com/s/s8sslmwbx43jqw5/Video%20Nov%2006%2C%207%2057%2005%20PM.mov?dl=0",
+            "type": "video"
+        }
+    ],
+    "notebook": {
+        "commit": "2131efefc17865b7925880610a60256a8913b2db",
+        "files": ["notebooks/D3%20MQTT%20Potentiometer%20Tangent.ipynb"]
+    },
+    "notes": "Tangest to check my understanding of the Photon and plotting analogReads worked with a potentiometer.",
+    "data": {
+        "data": "[7, 8, 9, 8, 7, 8, 8, 22, 518, 1013, 1480, 1613, 2003, 2007, 2551, 2855, 2891, 2955, 2576, 1944, 1943, 1944, 1943, 1942, 1942, 1944, 1943, 1943, 1943, 1980, 1982, 1982, 1982, 1982, 1982, 1982, 1982, 1981, 1982, 1981, 1980, 1976, 2010, 2332, 2343, 2687, 3052, 3114, 3114, 2604, 2094, 1272, 1203, 1153, 1084, 1044, 1044, 1045, 8, 8, 8, 8, 7, 8, 8, 59, 162, 2547, 2515, 3284, 3283, 3283, 2813, 304, 8, 8, 7, 93, 2280, 2464, 2467, 595, 67, 10, 8, 7, 9]"
+    }
+}
