@@ -1,0 +1,29 @@
+{
+    "code": {
+        "firmware": {
+            "commit": "7f62dd7c7cad05714f52d6d914e4d70a46776301",
+            "files": ["spark-photon/mqtt_photon_9dof/*"]
+        }
+    },
+    "media": [
+        {
+            "url": "https://www.dropbox.com/s/l9mj9xk4evcv9mw/Photo%20Nov%2009%2C%2010%2022%2053%20PM.jpg?dl=0"
+        },
+        {
+            "url": "https://www.dropbox.com/s/6viwaz0al72c0kj/Photo%20Nov%2009%2C%2010%2023%2006%20PM.jpg?dl=0"
+        },
+        {
+            "url": "https://www.dropbox.com/s/ct3lt0xz5d89qb5/Video%20Nov%2009%2C%2010%2024%2007%20PM.mov?dl=0",
+            "type": "video"
+        }
+    ],
+    "notebook": {
+        "commit": "7f62dd7c7cad05714f52d6d914e4d70a46776301",
+        "files": ["notebooks/D3%20MQTT%209DOF.ipynb"]
+    },
+    "notes": "Tangent to test the BNO055 9DOF orientation sensor",
+    "data": {
+        "commit": "7f62dd7c7cad05714f52d6d914e4d70a46776301",
+        "files": ["data/versions/v3_data.txt"]
+    }
+}
